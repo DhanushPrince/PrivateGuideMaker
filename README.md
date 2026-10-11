@@ -1,116 +1,62 @@
-# Pagewalk
+# StepSafe
 
-> **Beta** — Pagewalk is under active development. Expect breaking changes, incomplete features, and rough edges. Feedback and bug reports are welcome.
+**Record your clicks into a step-by-step how-to guide — with sensitive data blurred on the page *before* every screenshot.** Local-only, no account, free unlimited exports (Markdown, HTML, PDF).
 
-**A privacy-first, open-source Chrome extension that records step-by-step browser guides with automatic screenshots. A local alternative to Scribe and Tango — no cloud, no account, no telemetry.**
+StepSafe is a Chrome (MV3) extension, a fork of [Pagewalk](https://github.com/hamad501/pagewalk) (MIT). Vanilla JS, no build step, no runtime dependencies beyond the libraries Pagewalk already vendored.
 
-Pagewalk captures every click, keystroke, and page navigation as you work, takes a screenshot at each step, and assembles them into a polished walkthrough you can annotate, export, and share. Everything stays in your browser's local storage. Nothing ever leaves your machine.
+## What it does
+- Each click (and typed field) becomes a step: screenshot + auto step text (`Click "Save"`, `Type in "Email"`).
+- **Redaction is ON by default.** While recording, the page is masked (blur by default) and kept masked: a `MutationObserver` re-masks content added later, and redaction is re-run synchronously right before every capture (hover pre-shot, mousedown, click, keystroke, post-load, navigation, manual, start).
+- Detected: emails, phones (incl. Indian `+91` / 10-digit mobiles), card numbers (Luhn-checked), Aadhaar (Verhoeff-checked), PAN, UPI IDs, IFSC, US SSN, money (opt-in), custom regexes. Always blurred: password fields, `[data-stepsafe-blur]` elements, and anything you **Alt+click** while recording (toggles; not recorded as a step). Per-category toggles in Settings.
+- Detected PII is also masked out of step text, page titles and typed values (typed values never appear in step titles).
+- **On-device AI step titles** via Chrome's built-in Prompt API (`LanguageModel`, Gemini Nano). Used only if the model is already available on the device; otherwise the deterministic template text is kept. Nothing is sent off-device.
+- Exports: Markdown (images embedded as data URIs), standalone HTML, PDF (HTML + print stylesheet → browser's *Save as PDF*). Small "Made with StepSafe" link in exports and viewer.
 
-## Features
+## Install (load unpacked)
+1. Unzip `StepSafe.zip` (or clone this folder).
+2. Open `chrome://extensions`, enable **Developer mode**.
+3. **Load unpacked** → select the folder containing `manifest.json`.
+4. Click the StepSafe toolbar icon → side panel → **Start Capture**.
 
-**Recording**
-- Automatic screenshot capture on every click and keystroke
-- Click + keystroke merging (click a field then type into it = one step, not two)
-- Navigation tracking across pages and domains, including new-tab follows
-- Manual screenshot capture for anything the auto-recorder misses
-- Pause, resume, and discard controls from both the floating widget and the side panel
-- Password fields automatically masked before reaching storage
+Tests (no dependencies): `node --test test/`
 
-**Viewer & Editor**
-- Read mode with animated click indicators showing exactly where each action happened
-- Inline edit mode — rewrite descriptions, reorder steps via drag-and-drop, delete steps
-- Fabric.js annotation canvas with arrows, rectangles, text, blur regions, and freehand drawing
-- Full color picker for annotations
-- Movable click-pin badge that updates the click indicator position on save
-- Lightbox with keyboard navigation (arrow keys, Home/End) and step captions
-- Version history with one-click restore (snapshots taken automatically on each edit session)
-- Inline-editable guide title and description
+## Permissions
+| Permission | Why |
+|---|---|
+| `activeTab`, `scripting` | Inject the recorder into the tab you record. |
+| `storage`, `unlimitedStorage` | Settings + guides/screenshots in local IndexedDB. |
+| `sidePanel` | Recording UI. |
+| `webNavigation` | Turn page navigations into steps and re-inject the recorder after each load. |
+| host `<all_urls>` | `activeTab` alone is lost when the recorded tab navigates to another page/origin, so a multi-page guide (and "Guide Me" replay) could not re-inject the recorder or capture screenshots without the user re-clicking the icon on every page. It is used only on the tab you are recording / replaying. |
 
-**Guide Me (Live Replay)**
-- Highlights the real DOM element for each step as you follow along on the live site
-- Works across full page loads and SPA client-side routing (Next.js, SvelteKit, React Router)
-- Five-tier element resolution: CSS selector, XPath, attribute match, text match, coordinate fallback
-
-**Export & Share**
-- PDF with branded cover page, numbered steps, and click indicators
-- Standalone HTML file (works offline, no external dependencies)
-- Markdown
-- Copy as plain text
-- Custom branding: primary color, logo, brand name, tagline
-
-**Privacy & Security**
-- Auto-redact sensitive data (emails, phone numbers, credit cards, SSNs) with configurable categories
-- Custom regex redaction patterns
-- Redaction style: black blocks or blur
-
-**Settings**
-- Screenshot delay, JPEG quality, capture-on-start toggle
-- Show/hide floating widget (side panel has full feature parity)
-- Default guide title template with tokens: `{host}`, `{title}`, `{date}`, `{time}`
-- Versions per guide (1-50)
-- Full backup export/import (JSON)
-- Storage usage monitor
-- Delete all data
-
-## Install
-
-No build step, no npm, no setup script.
-
-1. Download or clone this repo
-2. Open `chrome://extensions` in Chrome
-3. Enable **Developer mode** (top right toggle)
-4. Click **Load unpacked** and select the downloaded/cloned folder
-5. Click the Pagewalk icon in your toolbar to open the side panel
-
-## Quick Start
-
-1. **Open the side panel** — click the Pagewalk icon in the Chrome toolbar
-2. **Click "Start Capture"** — navigate to the page you want to document
-3. **Do the thing** — click through your workflow normally. Pagewalk captures a screenshot at each step automatically.
-4. **Click "Complete"** — the guide opens in the viewer in edit mode so you can polish descriptions, reorder steps, and add annotations
-5. **Export or share** — PDF, HTML, Markdown, or copy as text
+Removed vs Pagewalk: `tabs` (not needed with host access) and `web_accessible_resources` (extension pages no longer exposed to websites). No `chrome.debugger`, no remote code, no network requests.
 
 ## Privacy
+StepSafe has no server, no account, no analytics and makes no network requests. Guides, screenshots and settings stay in your browser profile (IndexedDB / `chrome.storage.local`). AI titles run on-device through Chrome's built-in model; StepSafe never sends page content anywhere. Exports are files you save yourself.
 
-Pagewalk is local-only by design:
+**Limits of redaction** (best effort — review screenshots before sharing): text inside canvas/images/video, cross-origin iframes and closed shadow roots is not detected; values set by page script without any DOM mutation or `input` event are caught at the next capture's re-scan, not between scans; regexes can miss unusual formats or over-blur look-alikes (e.g. any 9-digit number when the SSN category is on). Alt+click marks last for the current page only.
 
-- **No server.** There is no backend. No API calls. No analytics endpoint.
-- **No account.** No sign-up, no login, no user tracking.
-- **No telemetry.** Zero network requests to any Pagewalk-owned or third-party service.
-- **All data stays in IndexedDB** inside your browser profile. Guides, screenshots, settings, version history — everything.
-- **The `<all_urls>` host permission** is required so the extension can inject the recorder into any website you choose to record. It is never used to read pages you aren't actively recording.
-- **Audit it yourself.** The entire codebase is vanilla JS with no build step. What you read is exactly what runs.
+## Chrome Web Store listing (draft)
+- **Title:** StepSafe — Private Step-by-Step Guide Recorder
+- **Short description (≤132):** Turn clicks into how-to guides with screenshots. Emails, cards, Aadhaar, PAN & passwords are blurred before capture. 100% local.
+- **Category:** Productivity / Workflow & Planning
+- **Single purpose:** Record the user's actions in a tab into a step-by-step guide with redacted screenshots.
+- **Privacy practices:**
+  - Data collected: none transmitted. The extension processes website content (page text, screenshots) locally, only on the tab the user chooses to record.
+  - Sold to third parties: No. Used for purposes unrelated to the single purpose: No. Used for creditworthiness/lending: No.
+  - Remote code: No.
+  - Permission justifications: as in the table above.
+  - Privacy policy URL: https://stepsafe.app/privacy (placeholder).
 
-## Architecture
+## Attribution
+Fork of [hamad501/pagewalk](https://github.com/hamad501/pagewalk) — MIT License, see `LICENSE` (unchanged) and `NOTICE`. The first commit in this repo is the unmodified upstream import, so `git diff HEAD~N` (or `git log -p`) shows every StepSafe change.
 
-Manifest V3 Chrome extension. Vanilla JavaScript, ES modules, no framework, no bundler.
-
+## Architecture (unchanged layout)
 ```
-background/service-worker.js   # Message router, state machine, screenshot capture
-sidepanel/                     # Entry UI — toolbar icon opens this
-viewer/                        # Guide viewer + inline editor + Fabric.js annotator
-dashboard/                     # Guide library (list, search, sort, settings)
-content/recorder.js            # Injected during recording — captures clicks/keystrokes
-content/player.js              # Injected during Guide Me — live element highlighting
-lib/storage.js                 # IndexedDB access (idb@8 wrapper)
-lib/annotations.js             # Fabric.js canvas wrapper
-lib/export.js                  # PDF, HTML, Markdown exporters
-assets/                        # Shared CSS, icons
+background/service-worker.js   message router, capture pipeline
+content/recorder.js            click/keystroke capture + redaction engine
+lib/pii.js                     PII regexes + Luhn/Verhoeff (shared with tests)
+lib/ai-titles.js               Prompt API titles with template fallback
+lib/export.js                  Markdown / HTML / PDF(print)
+sidepanel/ viewer/ dashboard/  UI
 ```
-
-Vendor libraries (committed, no download needed):
-- [idb](https://github.com/jakearchibald/idb) v8.0.2 — IndexedDB wrapper
-- [Fabric.js](http://fabricjs.com/) v5.3.1 — Canvas annotation
-- [jsPDF](https://github.com/parallax/jsPDF) v2.5.1 — PDF generation
-- [SortableJS](https://github.com/SortableJS/Sortable) v1.15.0 — Drag-and-drop reorder
-
-## Limitations
-
-- Cannot record on `chrome://`, `chrome-extension://`, `edge://`, or Chrome Web Store pages (browser policy)
-- Screenshots capture the visible viewport only — no full-page scroll capture (MV3 constraint)
-- Guide Me element resolution is best-effort on heavily dynamic SPAs where the DOM structure changes significantly between sessions
-- The floating recording widget uses a closed Shadow DOM — sites with aggressive content security policies may occasionally interfere
-
-## License
-
-MIT

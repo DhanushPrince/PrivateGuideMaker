@@ -1,0 +1,9 @@
+StepSafe
+Copyright (c) 2026 Dhanush R
+
+This product is a fork of Pagewalk (https://github.com/hamad501/pagewalk),
+Copyright (c) its contributors, licensed under the MIT License. The original
+LICENSE file is retained unchanged in this repository.
+
+Bundled third-party libraries (unchanged from Pagewalk, MIT licensed):
+idb (Jake Archibald), Fabric.js, SortableJS — see lib/vendor/.
