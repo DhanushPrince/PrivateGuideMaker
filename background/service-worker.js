@@ -574,6 +574,12 @@ async function handleGuideMeNavigation(tabId, newUrl) {
 // here so a rogue page firing synthetic pointerover events can't saturate
 // Chrome's ~2-captures/sec rate limit.
 let _lastProactiveTs = 0;
+// When a fast press (mouseup < ~2 frames after mousedown) lets CLICK_DETECTED
+// overtake its own MOUSEDOWN_CAPTURE, that late post-click frame must not be
+// left as the *next* click's "pre-click" shot (it would be stale, and miss
+// anything Alt+click-marked in between).
+let _lastClickDetectedTs = 0;
+const LATE_MOUSEDOWN_MS = 400;
 const PROACTIVE_MIN_GAP_MS = 800;
 async function handleProactiveSnapshot(sender) {
   if (!state.recording || state.paused || pendingCapture) {
@@ -635,6 +641,7 @@ async function handleMousedownCapture(sender) {
     pwLog('MOUSEDOWN capture FAIL', { ms: Date.now() - t0, err: err.message });
     console.warn('[StepSafe SW] mousedown capture failed:', err.message);
   }
+  if (Date.now() - _lastClickDetectedTs < LATE_MOUSEDOWN_MS) dataUrl = null; // late: click already handled
   pendingPreClickShot = dataUrl ? { dataUrl, tabId, ts: Date.now() } : null;
   return { ok: true };
 }
@@ -653,6 +660,7 @@ async function handleClickDetected(msg, sender) {
   if (!tabId) return { ok: false };
 
   pendingCapture = true;
+  _lastClickDetectedTs = Date.now();
 
   try {
     const settings = await getSettings();
