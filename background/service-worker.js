@@ -1183,11 +1183,15 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
           await redactInTab(tabId);
           let shot = null;
           const tab = await chrome.tabs.get(tabId);
-          try {
-            shot = await chrome.tabs.captureVisibleTab(tab.windowId, {
-              format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
-            });
-          } catch (_) {}
+          const grab = () => chrome.tabs.captureVisibleTab(tab.windowId, {
+            format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
+          });
+          try { shot = await grab(); } catch (_) {
+            // Usually the ~2/s captureVisibleTab quota, already spent by the
+            // link's hover + mousedown shots when the next page loads fast.
+            await delay(1000);
+            try { await redactInTab(tabId); shot = await grab(); } catch (_) {}
+          }
           const updated = await updateStep(lastNav.id, {
             screenshotRaw: shot,
             pageTitle: maskT(tab.title),
