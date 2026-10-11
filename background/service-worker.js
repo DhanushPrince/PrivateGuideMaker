@@ -3,6 +3,8 @@
  * Module type: uses static imports.
  */
 import { createGuide, createStep, updateStep, listSteps, deleteGuide, getGuide } from '../lib/storage.js';
+import '../lib/pii.js'; // sets globalThis.StepSafePII
+const maskT = (t) => globalThis.StepSafePII.maskPII(t || ''); // tab titles can hold PII
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -238,10 +240,10 @@ async function startRecording(tabId, title) {
     // "Navigate to …" step than silently drop it.
     try {
       const initialStep = await createStep(guide.id, {
-        description: `Starting on ${tab?.title || tab?.url || 'page'}`,
+        description: `Starting on ${maskT(tab?.title) || tab?.url || 'page'}`,
         screenshotRaw: screenshotDataUrl,
         clickX: 0, clickY: 0,
-        pageUrl: tab?.url || '', pageTitle: tab?.title || '',
+        pageUrl: tab?.url || '', pageTitle: maskT(tab?.title),
         devicePixelRatio: 1,
         type: 'navigate',
         toUrl: tab?.url || '',
@@ -792,7 +794,7 @@ async function handleManualCapture(msg, sender) {
       const tab = await chrome.tabs.get(tabId);
       windowId = tab.windowId;
       pageUrl = pageUrl || tab.url || '';
-      pageTitle = pageTitle || tab.title || '';
+      pageTitle = pageTitle || maskT(tab.title);
     } catch (_) { return { ok: false }; }
   }
 
@@ -1180,8 +1182,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
           } catch (_) {}
           const updated = await updateStep(lastNav.id, {
             screenshotRaw: shot,
-            pageTitle: tab.title || '',
-            description: `Navigate to ${tab.title || friendlyUrl(tab.url || '')}`,
+            pageTitle: maskT(tab.title),
+            description: `Navigate to ${maskT(tab.title) || friendlyUrl(tab.url || '')}`,
           });
           // Re-broadcast so the side panel feed replaces the placeholder
           // nav entry with the one that now has a thumbnail + page title.

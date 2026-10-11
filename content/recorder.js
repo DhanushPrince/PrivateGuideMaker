@@ -96,7 +96,7 @@
         height: Math.round(rect.height),
       } : null,
       pageUrl: location.href,
-      pageTitle: document.title,
+      pageTitle: maskText(document.title),
       devicePixelRatio: window.devicePixelRatio || 1,
       // Element identity for Guide Me replay
       targetSelector: targetMeta.selector,
@@ -200,7 +200,7 @@
         rect,
         targetMeta,
         pageUrl: location.href,
-        pageTitle: document.title,
+        pageTitle: maskText(document.title),
         devicePixelRatio: window.devicePixelRatio || 1,
         interactiveEl: event.target.closest(INPUT_SELECTORS) || null,
         ts: Date.now(),
@@ -401,7 +401,7 @@
         height: Math.round(rect.height),
       } : null,
       pageUrl: location.href,
-      pageTitle: document.title,
+      pageTitle: maskText(document.title),
       devicePixelRatio: window.devicePixelRatio || 1,
       targetSelector: targetMeta.selector,
       targetXPath:    targetMeta.xpath,
@@ -691,7 +691,7 @@
       chrome.runtime.sendMessage({
         type: 'MANUAL_CAPTURE',
         pageUrl: window.location.href,
-        pageTitle: document.title,
+        pageTitle: maskText(document.title),
         devicePixelRatio: window.devicePixelRatio || 1,
       }).catch(() => {}).finally(() => { captureBtn.disabled = false; });
     });

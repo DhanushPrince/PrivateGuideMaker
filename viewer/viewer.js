@@ -9,6 +9,7 @@ import {
   createVersion, listVersions, restoreVersion, deleteVersion, DEFAULT_MAX_VERSIONS,
 } from '../lib/storage.js';
 import { exportPDF, exportHTML, exportMarkdown } from '../lib/export.js';
+import { aiTitles } from '../lib/ai-titles.js';
 import { AnnotationCanvas } from '../lib/annotations.js';
 import { showConfirmModal } from '../lib/confirm-modal.js';
 
@@ -473,6 +474,9 @@ async function init() {
   renderSteps();
   renderSidebar();
   wireSidebarScrollSpy();
+  aiTitles(currentSteps, updateStep)
+    .then(ok => { if (ok) { renderSteps(); renderSidebar(); } })
+    .catch(err => console.warn('[StepSafe] AI titles skipped:', err.message));
 
   if (startInEdit) setMode('edit');
 }
