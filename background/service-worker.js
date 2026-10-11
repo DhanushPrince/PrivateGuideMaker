@@ -100,6 +100,8 @@ async function getSettings() {
     jpegQuality: SCREENSHOT_QUALITY,
     captureOnStart: true,
     showWidget: false,
+    autoRedact: true,
+    redactStyle: 'blur',
   };
 }
 
@@ -206,7 +208,11 @@ async function startRecording(tabId, title) {
 
   const settings = await getSettings();
 
-  // Capture the starting page FIRST (before injecting the recorder) so
+  // StepSafe: inject the recorder (which masks the page) BEFORE the first
+  // capture. pendingCapture=true keeps clicks from racing it.
+  await injectRecorder(tabId);
+
+  // Capture the starting page while pendingCapture blocks clicks, so
   // there's no chance of a click arriving mid-capture and reordering the
   // first two steps. Screenshot capture and step creation are in separate
   // try blocks so a captureVisibleTab failure (rate limit, backgrounded
@@ -219,6 +225,7 @@ async function startRecording(tabId, title) {
     if (tab) {
       try {
         await delay(settings.screenshotDelay ?? SCREENSHOT_DELAY_MS);
+        await redactInTab(tabId);
         screenshotDataUrl = await chrome.tabs.captureVisibleTab(tab.windowId, {
           format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
         });
@@ -255,11 +262,7 @@ async function startRecording(tabId, title) {
   // clicks from this point forward become regular click steps.
   pendingCapture = false;
   await saveState();
-  await injectRecorder(tabId);
   await showWidgetInTab(tabId, state.stepCount);
-
-  // Persistent redaction: mask the page for the entire recording session
-  await applyPersistentRedact(tabId);
 
   broadcastState();
   return { ok: true, guideId: guide.id };
@@ -610,6 +613,8 @@ async function handleMousedownCapture(sender) {
   const windowId = sender.tab?.windowId || null;
   if (!tabId) return { ok: false };
 
+  // Redaction was re-applied synchronously in the page right before this
+  // message (recorder.js hideWidgetForCapture), so the frame is masked.
   // Fire captureVisibleTab IMMEDIATELY — no awaits before it. Every ms spent
   // on sendMessage round-trips (hideWidget/redact) gives SPA routers time to
   // swap the DOM before Chrome rasterizes the frame, which was the bug that
@@ -684,7 +689,6 @@ async function handleClickDetected(msg, sender) {
         pwLog('CLICK fallback capture FAIL', { ms: Date.now() - t0, err: err.message });
         console.warn('[Pagewalk SW] pre-click captureVisibleTab failed:', err.message);
       }
-      await unredactInTab(tabId);
     }
 
     const step = await createStep(state.guideId, {
@@ -762,7 +766,6 @@ async function schedulePostLoadCapture(tabId, stepId) {
     } catch (err) {
       console.warn('[Pagewalk SW] post-load captureVisibleTab failed:', err.message);
     }
-    await unredactInTab(tabId);
     if (shot) {
       await updateStep(stepId, { screenshotPostLoad: shot });
     }
@@ -808,7 +811,6 @@ async function handleManualCapture(msg, sender) {
     } catch (err) {
       console.warn('[Pagewalk SW] captureVisibleTab failed:', err.message);
     }
-    await unredactInTab(tabId);
 
     const step = await createStep(state.guideId, {
       description: 'Screenshot',
@@ -841,7 +843,8 @@ async function handleKeystrokeDetected(msg, sender) {
   // rewrite the previous click step into a "Type ... in ..." step instead of
   // adding a duplicate. Tango does the same thing.
   const maskedOrReal = msg.isPassword ? '••••••' : msg.value;
-  const description = `Type "${truncate(maskedOrReal, 50)}" in "${msg.fieldDescription}"`;
+  // Typed values never go into step text (they may be PII).
+  const description = `Type in "${msg.fieldDescription}"`;
 
   if (msg.mergeWithPreviousClick && state.lastClickStepId) {
     try {
@@ -880,7 +883,6 @@ async function handleKeystrokeDetected(msg, sender) {
     } catch (err) {
       console.warn('[Pagewalk SW] captureVisibleTab failed:', err.message);
     }
-    await unredactInTab(tabId);
 
     const step = await createStep(state.guideId, {
       description,
@@ -926,41 +928,19 @@ async function hideWidgetInTab(tabId) {
   } catch (_) {}
 }
 
-async function applyPersistentRedact(tabId) {
-  try {
-    const settings = await getSettings();
-    if (!settings.autoRedact || settings.redactMode !== 'persistent') return;
-    await chrome.tabs.sendMessage(tabId, {
-      type: 'REDACT_PERSISTENT_START',
-      style: settings.redactStyle || 'redact',
-      categories: settings.redactCategories || {},
-      customPatterns: settings.redactCustomPatterns || [],
-    });
-  } catch (_) {}
-}
-
 async function redactInTab(tabId) {
   try {
     const settings = await getSettings();
-    if (!settings.autoRedact) return;
-    // Always re-run redaction before capture — catches new DOM content even in persistent mode.
-    // Always re-run redaction before capture — catches new DOM content even in persistent mode
+    if (settings.autoRedact === false) return;
+    // Re-run redaction right before every SW-side capture. It stays applied
+    // (and MutationObserver-maintained) until recording stops.
     await chrome.tabs.sendMessage(tabId, {
       type: 'REDACT_FOR_CAPTURE',
-      style: settings.redactStyle || 'redact',
+      style: settings.redactStyle || 'blur',
       categories: settings.redactCategories || {},
       customPatterns: settings.redactCustomPatterns || [],
     });
     await delay(WIDGET_HIDE_DELAY);
-  } catch (_) {}
-}
-
-async function unredactInTab(tabId) {
-  try {
-    const settings = await getSettings();
-    // In persistent mode, don't restore after each capture
-    if (settings.autoRedact && settings.redactMode === 'persistent') return;
-    await chrome.tabs.sendMessage(tabId, { type: 'RESTORE_AFTER_CAPTURE' });
   } catch (_) {}
 }
 
@@ -1179,7 +1159,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
   if (state.recording && tabId === state.tabId) {
     await delay(200);
     await injectRecorder(tabId);
-    await applyPersistentRedact(tabId);
     await showWidgetInTab(tabId, state.stepCount);
 
     // Back-fill a screenshot + title onto the most recent nav step (if any)
@@ -1199,7 +1178,6 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
               format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
             });
           } catch (_) {}
-          await unredactInTab(tabId);
           const updated = await updateStep(lastNav.id, {
             screenshotRaw: shot,
             pageTitle: tab.title || '',
@@ -1268,7 +1246,7 @@ async function injectRecorder(tabId) {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ['content/recorder.js'],
+      files: ['lib/pii.js', 'content/recorder.js'],
       injectImmediately: true,
     });
   } catch (err) {
@@ -1289,11 +1267,6 @@ function friendlyUrl(url) {
     const u = new URL(url);
     return u.hostname + (u.pathname === '/' ? '' : u.pathname);
   } catch (_) { return url || 'page'; }
-}
-
-function truncate(str, n) {
-  if (!str) return '';
-  return str.length <= n ? str : str.slice(0, n - 1) + '…';
 }
 
 // Restore recording badge on SW startup and clean up any stale Guide Me

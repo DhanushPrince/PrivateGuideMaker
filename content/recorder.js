@@ -62,7 +62,7 @@
   // ─── Click listener (capture phase, does NOT prevent default) ───────────
   function onCapture(event) {
     if (tearingDown || paused) return;
-    if (event.button !== 0) return;
+    if (event.button !== 0 || event.altKey) return;
     if (event.target && event.target.closest && event.target.closest('[data-pagewalk]')) return;
     // Ignore clicks on our shadow host
     if (event.target === widgetHost || (widgetHost && event.composedPath && event.composedPath().includes(widgetHost))) return;
@@ -180,7 +180,7 @@
 
   function onMousedown(event) {
     if (tearingDown || paused) return;
-    if (event.button !== 0) return;
+    if (event.button !== 0 || event.altKey) return;
     if (event.target?.closest?.('[data-pagewalk]')) return;
     if (event.target === widgetHost || (widgetHost && event.composedPath?.().includes(widgetHost))) return;
 
@@ -276,6 +276,9 @@
   const WIDGET_RESTORE_DELAY_MS = 400;
   const WIDGET_OFFSCREEN_TRANSFORM = 'translate(-99999px, -99999px)';
   function hideWidgetForCapture(messageType) {
+    // No pre-capture until redaction is loaded; re-mask synchronously first.
+    if (!_redactReady) return;
+    redactNow();
     if (_widgetRestoreTimer) {
       clearTimeout(_widgetRestoreTimer);
       _widgetRestoreTimer = null;
@@ -319,7 +322,7 @@
   let _lastProactiveFire = 0;
   const PROACTIVE_MIN_GAP_MS = 900;
   function onProactiveHover(event) {
-    if (tearingDown || paused) return;
+    if (tearingDown || paused || event.altKey) return;
     const t = event.target;
     if (!t || !t.closest) return;
     if (t.closest('[data-pagewalk]')) return;
@@ -386,7 +389,7 @@
     chrome.runtime.sendMessage({
       type: 'KEYSTROKE_DETECTED',
       fieldDescription,
-      value: rawValue,
+      value: maskText(rawValue),
       isPassword: buf.isPassword,
       mergeWithPreviousClick: mergeWithClick,
       clickX: Math.round(rect.left + rect.width / 2),
@@ -420,200 +423,139 @@
     }
   });
 
-  // ─── Auto-redaction engine ───────────────────────────────────────────────
-  // Scans visible DOM for sensitive patterns, temporarily masks them for
-  // screenshot capture, then restores the originals.
+  // ─── Auto-redaction engine (StepSafe) ────────────────────────────────────
+  // ON by default. Applied on injection, kept applied for the whole recording
+  // (MutationObserver re-runs it before the next paint), and re-run
+  // synchronously before every capture. Patterns live in lib/pii.js.
 
   const REDACT_CHAR = '█';
-  const REDACT_PATTERNS = [
-    // Email addresses
-    /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g,
-    // Phone numbers — international and common formats
-    /(?:\+?\d{1,3}[\s\-.]?)?\(?\d{2,4}\)?[\s\-.]?\d{3,4}[\s\-.]?\d{3,4}/g,
-    // Credit card numbers (13-19 digits, optionally grouped)
-    /\b(?:\d[ \-]?){12,18}\d\b/g,
-    // SSN / national ID (US format)
-    /\b\d{3}[\s\-]?\d{2}[\s\-]?\d{4}\b/g,
-    // Money amounts — symbol-prefixed ($1,234.56) or suffixed (500 USD)
-    // Symbols: $ pound euro yen rupee won lira ruble baht dong colón guarani kip riyal shekel
-    // Codes: 40+ most-used ISO 4217 currencies
-    /(?:[\$\u00a3\u20ac\u00a5\u20b9\u20a9\u20ba\u20bd\u20b1\u20b4\u20ab\u20a1\u20b2\u20ad\ufdfc\u20aa]|R\$|RM|Rp|Rs|kr|zł|Kč|Ft)\s?\d{1,3}(?:[,\.]\d{3})*(?:\.\d{1,2})?|\d{1,3}(?:[,\.]\d{3})*(?:\.\d{1,2})?\s?(?:USD|EUR|GBP|JPY|AED|SAR|BHD|KWD|QAR|OMR|CAD|AUD|CHF|INR|CNY|SGD|HKD|NZD|SEK|NOK|DKK|ZAR|MXN|BRL|THB|PHP|IDR|MYR|EGP|TRY|PKR|NGN|KES|GHS|MAD|TND|JOD|IQD|LBP|COP|ARS|CLP|PEN|VND|KRW|TWD|PLN|CZK|HUF|RON|BGN|HRK|ILS|RUB|UAH)\b/gi,
-  ];
+  const BLUR = 'blur(8px)';
+  const PII = globalThis.StepSafePII;
 
   // Input types and autocomplete hints that likely contain sensitive data
-  const SENSITIVE_INPUT_TYPES = ['email', 'tel'];
+  const SENSITIVE_INPUT_TYPES = ['email', 'tel', 'password'];
   const SENSITIVE_AUTOCOMPLETE = [
     'email', 'tel', 'phone', 'cc-number', 'cc-csc', 'cc-exp',
     'cc-name', 'name', 'given-name', 'family-name', 'address-line1',
-    'address-line2', 'postal-code', 'bday',
+    'address-line2', 'postal-code', 'bday', 'password',
   ];
 
-  let _redactBackup = []; // stores { node, original } or { el, attr, original }
+  let _redactBackup = []; // stores { node, original } or { el, original, priority }
+  let _redactCfg = null;  // { style, cats, custom: RegExp[] } — null = redaction off
+  let _redactObserver = null;
 
-  function redactDOM(style, categories, customPatterns) {
-    // Restore any previous redaction first so we don't double-redact
+  function setRedactConfig(style, categories, customPatterns) {
+    const lines = Array.isArray(customPatterns) ? customPatterns.map(p => p && p.pattern)
+      : String(customPatterns || '').split('\n');
+    const custom = [];
+    for (const p of lines) { if (p && p.trim()) try { custom.push(new RegExp(p.trim(), 'g')); } catch (_) {} }
+    _redactCfg = { style: style || 'blur', cats: categories || {}, custom };
+  }
+
+  function maskText(t) {
+    return _redactCfg && t ? PII.maskPII(t, _redactCfg.cats, _redactCfg.custom) : t;
+  }
+
+  function blurEl(el) {
+    if (_redactBackup.some(e => e.el === el)) return;
+    _redactBackup.push({ el, original: el.style.getPropertyValue('filter'), priority: el.style.getPropertyPriority('filter') });
+    el.style.setProperty('filter', BLUR, 'important');
+  }
+
+  // ponytail: full rescan per mutation batch, O(page text). Scope to
+  // mutation records if huge SPAs get janky.
+  function redactNow() {
+    if (!_redactCfg || !document.body) return;
+    if (_redactObserver) _redactObserver.disconnect();
     restoreDOM();
-    const useBlur = style === 'blur';
-    const cats = categories || {};
-    const noCats = Object.keys(cats).length === 0;
+    const { style, cats, custom } = _redactCfg;
+    const hit = (t) => PII.findPII(t, cats, custom).length > 0;
 
-    // Build active patterns from enabled categories + custom
-    const activePatterns = [];
-    if (noCats || cats.emails !== false)      activePatterns.push(REDACT_PATTERNS[0]);
-    if (noCats || cats.phones !== false)      activePatterns.push(REDACT_PATTERNS[1]);
-    if (noCats || cats.creditCards !== false) activePatterns.push(REDACT_PATTERNS[2]);
-    if (noCats || cats.ssn !== false)         activePatterns.push(REDACT_PATTERNS[3]);
-    if (cats.money)                           activePatterns.push(REDACT_PATTERNS[4]);
-
-    // Custom patterns: array of {name, pattern}
-    const rawCustom = customPatterns;
-    if (Array.isArray(rawCustom)) {
-      for (const { pattern } of rawCustom) {
-        if (!pattern) continue;
-        try { activePatterns.push(new RegExp(pattern, 'g')); } catch (_) {}
-      }
-    } else if (typeof rawCustom === 'string' && rawCustom) {
-      for (const line of rawCustom.split('\n')) {
-        const t = line.trim();
-        if (!t) continue;
-        try { activePatterns.push(new RegExp(t, 'g')); } catch (_) {}
-      }
-    }
-
-    // 1. Redact sensitive input/textarea values (field-type detection, unaffected by categories)
-    const inputs = document.querySelectorAll('input, textarea');
-    for (const el of inputs) {
+    // 1. Inputs: always blurred (never rewrite .value — it would be submitted)
+    for (const el of document.querySelectorAll('input, textarea, select')) {
       if (el.closest('[data-pagewalk]')) continue;
-      const inputType = (el.type || '').toLowerCase();
+      const type = (el.type || '').toLowerCase();
+      if (type === 'hidden') continue;
       const ac = (el.getAttribute('autocomplete') || '').toLowerCase();
-      if (inputType === 'password') continue;
-
-      const isSensitiveType = SENSITIVE_INPUT_TYPES.includes(inputType);
-      const isSensitiveAc = SENSITIVE_AUTOCOMPLETE.some(s => ac.includes(s));
-      const valueMatchesPattern = activePatterns.some(p => { p.lastIndex = 0; return p.test(el.value); });
-
-      if ((isSensitiveType || isSensitiveAc || valueMatchesPattern) && el.value.trim()) {
-        if (useBlur) {
-          _redactBackup.push({ el, attr: 'filter', original: el.style.getPropertyValue('filter'), priority: el.style.getPropertyPriority('filter') });
-          el.style.setProperty('filter', 'blur(6px)', 'important');
-        } else {
-          _redactBackup.push({ el, attr: 'value', original: el.value });
-          el.value = REDACT_CHAR.repeat(Math.min(el.value.length, 20));
-        }
-      }
+      if (cats.formFields || type === 'password' ||
+          (el.value && el.value.trim() && (SENSITIVE_INPUT_TYPES.includes(type) ||
+            SENSITIVE_AUTOCOMPLETE.some(s => ac.includes(s)) || hit(el.value)))) blurEl(el);
     }
 
-    // 1b. Blanket form-field redaction (all inputs, textareas, selects)
-    if (cats.formFields) {
-      const fields = document.querySelectorAll('input, textarea, select');
-      for (const el of fields) {
-        if (el.closest('[data-pagewalk]')) continue;
-        if ((el.type || '').toLowerCase() === 'hidden') continue;
-        if (useBlur) {
-          if (_redactBackup.some(e => e.el === el && e.attr === 'filter')) continue;
-          _redactBackup.push({ el, attr: 'filter', original: el.style.getPropertyValue('filter'), priority: el.style.getPropertyPriority('filter') });
-          el.style.setProperty('filter', 'blur(6px)', 'important');
-        } else if (el.value && el.value.trim()) {
-          if (_redactBackup.some(e => e.el === el && e.attr === 'value')) continue;
-          _redactBackup.push({ el, attr: 'value', original: el.value });
-          el.value = REDACT_CHAR.repeat(Math.min(el.value.length, 20));
-        }
+    // 2. User-marked elements (alt-click while recording) + page opt-in
+    for (const el of document.querySelectorAll('[data-stepsafe-blur]')) blurEl(el);
+
+    // 3. Table cells (opt-in)
+    if (cats.tableData) for (const el of document.querySelectorAll('td, th')) blurEl(el);
+
+    // 4. Text nodes — hidden ones too, so CSS reveals can't leak
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const p = node.parentElement;
+        if (!p || p.closest('[data-pagewalk], script, style, noscript')) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
       }
+    });
+    const nodes = [];
+    for (let n; (n = walker.nextNode());) if (hit(n.textContent)) nodes.push(n);
+    for (const node of nodes) {
+      if (style === 'blur') { blurEl(node.parentElement); continue; }
+      const masked = PII.maskPII(node.textContent, cats, custom, REDACT_CHAR);
+      _redactBackup.push({ node, original: node.textContent, masked });
+      node.textContent = masked;
     }
 
-    // 1c. Table data redaction (all td/th cell content)
-    if (cats.tableData) {
-      const cells = document.querySelectorAll('td, th');
-      for (const cell of cells) {
-        if (cell.closest('[data-pagewalk]')) continue;
-        const st = getComputedStyle(cell);
-        if (st.display === 'none' || st.visibility === 'hidden') continue;
-        if (useBlur) {
-          _redactBackup.push({ el: cell, attr: 'filter', original: cell.style.getPropertyValue('filter'), priority: cell.style.getPropertyPriority('filter') });
-          cell.style.setProperty('filter', 'blur(6px)', 'important');
-        } else {
-          const textNodes = [];
-          const tw = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT, null);
-          let tn;
-          while ((tn = tw.nextNode())) textNodes.push(tn);
-          for (const tn of textNodes) {
-            if (tn.textContent.trim()) {
-              _redactBackup.push({ node: tn, original: tn.textContent });
-              tn.textContent = REDACT_CHAR.repeat(Math.min(tn.textContent.length, 30));
-            }
-          }
-        }
-      }
+    if (!_redactObserver) {
+      _redactObserver = new MutationObserver(redactNow);
+      document.addEventListener('input', redactNow, true);
     }
+    _redactObserver.takeRecords();
+    _redactObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+  }
 
-    // 2. Walk visible text nodes and redact/blur pattern matches
-    const walker = document.createTreeWalker(
-      document.body,
-      NodeFilter.SHOW_TEXT,
-      {
-        acceptNode(node) {
-          const p = node.parentElement;
-          if (!p) return NodeFilter.FILTER_REJECT;
-          if (p.closest('[data-pagewalk]')) return NodeFilter.FILTER_REJECT;
-          if (p.closest('script, style, noscript')) return NodeFilter.FILTER_REJECT;
-          const st = getComputedStyle(p);
-          if (st.display === 'none' || st.visibility === 'hidden') return NodeFilter.FILTER_REJECT;
-          return NodeFilter.FILTER_ACCEPT;
-        }
-      }
-    );
-
-    const textNodes = [];
-    let n;
-    while ((n = walker.nextNode())) textNodes.push(n);
-
-    const blurredEls = new Set();
-
-    for (const node of textNodes) {
-      const original = node.textContent;
-      let hasMatch = false;
-      for (const pattern of activePatterns) {
-        pattern.lastIndex = 0;
-        if (pattern.test(original)) { hasMatch = true; break; }
-      }
-      if (!hasMatch) continue;
-
-      if (useBlur) {
-        const parent = node.parentElement;
-        if (parent && !blurredEls.has(parent)) {
-          blurredEls.add(parent);
-          _redactBackup.push({ el: parent, attr: 'filter', original: parent.style.getPropertyValue('filter'), priority: parent.style.getPropertyPriority('filter') });
-          parent.style.setProperty('filter', 'blur(6px)', 'important');
-        }
-      } else {
-        let replaced = original;
-        for (const pattern of activePatterns) {
-          pattern.lastIndex = 0;
-          replaced = replaced.replace(pattern, (m) => REDACT_CHAR.repeat(m.length));
-        }
-        _redactBackup.push({ node, original });
-        node.textContent = replaced;
-      }
-    }
-
+  function stopRedaction() {
+    if (_redactObserver) _redactObserver.disconnect();
+    _redactObserver = null;
+    document.removeEventListener('input', redactNow, true);
+    _redactCfg = null;
+    restoreDOM();
   }
 
   function restoreDOM() {
     for (const entry of _redactBackup) {
       if (entry.node) {
-        entry.node.textContent = entry.original;
-      } else if (entry.el && entry.attr === 'value') {
-        entry.el.value = entry.original;
-      } else if (entry.el && entry.attr === 'filter') {
-        if (entry.original) {
-          entry.el.style.setProperty('filter', entry.original, entry.priority || '');
-        } else {
-          entry.el.style.removeProperty('filter');
-        }
+        // Page changed it since? Keep the page's newer text.
+        if (entry.node.textContent === entry.masked) entry.node.textContent = entry.original;
+      } else if (entry.original) {
+        entry.el.style.setProperty('filter', entry.original, entry.priority || '');
+      } else {
+        entry.el.style.removeProperty('filter');
       }
     }
     _redactBackup = [];
   }
+
+  // Apply immediately on injection. Pre-capture snapshots are refused until
+  // this has run, so no frame is captured before the page is masked.
+  let _redactReady = false;
+  chrome.storage.local.get('pagewalk_settings').then(({ pagewalk_settings: s = {} }) => {
+    if (s.autoRedact !== false) {
+      setRedactConfig(s.redactStyle, s.redactCategories, s.redactCustomPatterns);
+      redactNow();
+    }
+    _redactReady = true;
+  }).catch(() => {});
+
+  // Alt-click toggles "always blur" on any element (not recorded as a step).
+  function onMarkClick(event) {
+    if (!event.altKey || tearingDown || event.button !== 0) return;
+    if (event.target?.closest?.('[data-pagewalk]')) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    event.target.toggleAttribute('data-stepsafe-blur');
+    redactNow();
+  }
+  document.addEventListener('click', onMarkClick, true);
 
   // ─── Message handler ────────────────────────────────────────────────────
   chrome.runtime.onMessage.addListener(function (msg, _sender, sendResponse) {
@@ -624,24 +566,15 @@
       return false;
     }
     if (msg.type === 'REDACT_FOR_CAPTURE') {
-      redactDOM(msg.style || 'redact', msg.categories, msg.customPatterns);
+      setRedactConfig(msg.style, msg.categories, msg.customPatterns);
+      redactNow();
       // Double-rAF: wait for the browser to actually paint the blur/redact
       // before telling the SW it's safe to screenshot
       requestAnimationFrame(() => requestAnimationFrame(() => sendResponse({ ok: true })));
       return true; // keep channel open for async response
     }
-    if (msg.type === 'RESTORE_AFTER_CAPTURE') {
-      restoreDOM();
-      sendResponse({ ok: true });
-      return false;
-    }
-    if (msg.type === 'REDACT_PERSISTENT_START') {
-      redactDOM(msg.style || 'redact', msg.categories, msg.customPatterns);
-      requestAnimationFrame(() => requestAnimationFrame(() => sendResponse({ ok: true })));
-      return true;
-    }
     if (msg.type === 'REDACT_PERSISTENT_STOP') {
-      restoreDOM();
+      stopRedaction();
       sendResponse({ ok: true });
       return false;
     }
@@ -701,6 +634,8 @@
     document.removeEventListener('input',     onInput,     { capture: true });
     document.removeEventListener('blur',      onBlurOrEnter, { capture: true });
     document.removeEventListener('keydown',   onBlurOrEnter, { capture: true });
+    document.removeEventListener('click',     onMarkClick, true);
+    stopRedaction();
     removeWidget();
     window.__pagewalkRecorderActive = false;
   }
@@ -1051,10 +986,10 @@
     const m = desc.match(/["']([^"']+)["']/);
     if (m) return m[1];
     // Fallback to input name / placeholder / type
-    return el.getAttribute('aria-label')
+    return maskText(el.getAttribute('aria-label')
         || el.getAttribute('placeholder')
         || el.getAttribute('name')
-        || (el.type ? el.type : 'field');
+        || (el.type ? el.type : 'field'));
   }
 
   function getVisibleText(el) {
@@ -1083,6 +1018,7 @@
   }
 
   function formatDescription(el, label) {
+    label = maskText(label);
     const tag = el.tagName.toLowerCase();
     const type = el.getAttribute('type') || '';
     if (tag === 'a') return `Click "${label}" link`;
@@ -1145,7 +1081,7 @@
       return {
         selector: getUniqueSelector(el),
         xpath:    getXPath(el),
-        text:     (el.textContent || '').trim().slice(0, 120) || null,
+        text:     maskText((el.textContent || '').trim().slice(0, 120)) || null,
         attrs: {
           id:         el.id || null,
           name:       el.getAttribute('name') || null,
