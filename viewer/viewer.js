@@ -12,11 +12,6 @@ import { exportPDF, exportHTML, exportMarkdown } from '../lib/export.js';
 import { AnnotationCanvas } from '../lib/annotations.js';
 import { showConfirmModal } from '../lib/confirm-modal.js';
 
-// Load jsPDF for PDF export (vendor global)
-const jspdfScript = document.createElement('script');
-jspdfScript.src = chrome.runtime.getURL('lib/vendor/jspdf.umd.min.js');
-document.head.appendChild(jspdfScript);
-
 const guideTitleEl = document.getElementById('guide-title');
 const heroTitleEl  = document.getElementById('hero-title');
 const heroDescEl   = document.getElementById('hero-desc');
@@ -1733,12 +1728,8 @@ shareMenu.addEventListener('click', async (e) => {
 
   try {
     if (fmt === 'pdf') {
-      if (!window.jspdf) {
-        showToast('PDF library still loading, try again in a moment.');
-        return;
-      }
       await exportPDF(currentGuide, currentSteps, branding);
-      showToast('PDF exported');
+      showToast('Choose "Save as PDF" in the print dialog');
     } else if (fmt === 'html') {
       await exportHTML(currentGuide, currentSteps, branding);
       showToast('HTML exported');
