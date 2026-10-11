@@ -1,4 +1,4 @@
-// Run: node --test test/   (no deps)
+// Run: node --test   (no deps)
 const test = require('node:test');
 const assert = require('node:assert');
 const { luhn, verhoeff, findPII, maskPII } = require('../lib/pii.js');

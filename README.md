@@ -18,7 +18,7 @@ StepSafe is a Chrome (MV3) extension, a fork of [Pagewalk](https://github.com/ha
 3. **Load unpacked** → select the folder containing `manifest.json`.
 4. Click the StepSafe toolbar icon → side panel → **Start Capture**.
 
-Tests (no dependencies): `node --test test/`
+Tests (no dependencies): `node --test` (runs `test/pii.test.js`)
 
 ## Permissions
 | Permission | Why |
