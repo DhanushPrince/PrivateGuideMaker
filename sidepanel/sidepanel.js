@@ -1,5 +1,5 @@
 /**
- * sidepanel.js — Pagewalk side panel entry UI
+ * sidepanel.js — StepSafe side panel entry UI
  * Mirrors the popup's start/stop flow but lives in chrome.sidePanel.
  */
 import { listGuides, getStep, getGuide, listSteps } from '../lib/storage.js';
@@ -147,7 +147,8 @@ startBtn.addEventListener('click', async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab) throw new Error('No active tab');
     const url = tab.url || '';
-    if (url.startsWith('chrome://') || url.startsWith('chrome-extension://') || url.startsWith('about:') || url.startsWith('edge://')) {
+    // No "tabs" permission: url is only visible on pages we may record.
+    if (!/^(https?|file):/.test(url)) {
       alert('Cannot record on browser internal pages. Navigate to a website first.');
       return;
     }

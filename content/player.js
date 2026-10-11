@@ -1,5 +1,5 @@
 /**
- * player.js — Pagewalk live guide playback overlay
+ * player.js — StepSafe live guide playback overlay
  * Injected into the page by the service worker during guide playback.
  * NOT a module — plain IIFE so it works with executeScript.
  */
@@ -750,7 +750,7 @@
   // on every history navigation which we listen for below.
   try {
     window.__slSendMessageRetry({ type: 'INSTALL_HISTORY_PATCH' })
-      .catch(e => console.warn('[Pagewalk Player] history patch request failed:', e));
+      .catch(e => console.warn('[StepSafe Player] history patch request failed:', e));
   } catch (_) {}
 
   window.addEventListener('sl:locationchange', onPotentialNav);
@@ -790,7 +790,7 @@
       ensureMounted();
       render();
     } catch (err) {
-      console.warn('[Pagewalk Player] refreshFromSession failed:', err);
+      console.warn('[StepSafe Player] refreshFromSession failed:', err);
     }
   }
 

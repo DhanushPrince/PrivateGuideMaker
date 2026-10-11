@@ -1,5 +1,5 @@
 /**
- * service-worker.js — Background service worker for Pagewalk
+ * service-worker.js — Background service worker for StepSafe
  * Module type: uses static imports.
  */
 import { createGuide, createStep, updateStep, listSteps, deleteGuide, getGuide } from '../lib/storage.js';
@@ -128,7 +128,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
   handleMessage(msg, sender).then(sendResponse).catch(err => {
-    console.error('[Pagewalk SW] error:', err);
+    console.error('[StepSafe SW] error:', err);
     sendResponse({ error: err.message });
   });
   return true;
@@ -230,7 +230,7 @@ async function startRecording(tabId, title) {
           format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
         });
       } catch (err) {
-        console.warn('[Pagewalk SW] captureOnStart screenshot failed:', err.message);
+        console.warn('[StepSafe SW] captureOnStart screenshot failed:', err.message);
       }
     }
 
@@ -254,7 +254,7 @@ async function startRecording(tabId, title) {
       await saveState();
       broadcastStepAdded(initialStep, 0);
     } catch (err) {
-      console.warn('[Pagewalk SW] initial step creation failed:', err.message);
+      console.warn('[StepSafe SW] initial step creation failed:', err.message);
     }
   }
 
@@ -409,7 +409,7 @@ async function injectMainWorldHistoryPatch(tabId) {
       func: mainWorldHistoryPatch,
     });
   } catch (err) {
-    console.warn('[Pagewalk SW] main-world patch inject failed:', err.message);
+    console.warn('[StepSafe SW] main-world patch inject failed:', err.message);
   }
 }
 
@@ -455,7 +455,7 @@ async function startGuideMe(guideId, guideTitle, steps) {
       persistAcrossSessions: false,
     }]);
   } catch (err) {
-    console.warn('[Pagewalk SW] registerContentScripts failed:', err.message);
+    console.warn('[StepSafe SW] registerContentScripts failed:', err.message);
   }
 
   // Wait for the tab to finish loading BEFORE injecting — trying to
@@ -631,7 +631,7 @@ async function handleMousedownCapture(sender) {
     pwLog('MOUSEDOWN capture ok', { ms: Date.now() - t0, bytes: dataUrl?.length });
   } catch (err) {
     pwLog('MOUSEDOWN capture FAIL', { ms: Date.now() - t0, err: err.message });
-    console.warn('[Pagewalk SW] mousedown capture failed:', err.message);
+    console.warn('[StepSafe SW] mousedown capture failed:', err.message);
   }
   pendingPreClickShot = dataUrl ? { dataUrl, tabId, ts: Date.now() } : null;
   return { ok: true };
@@ -687,7 +687,7 @@ async function handleClickDetected(msg, sender) {
         pwLog('CLICK fallback capture ok', { ms: Date.now() - t0, bytes: screenshotDataUrl?.length });
       } catch (err) {
         pwLog('CLICK fallback capture FAIL', { ms: Date.now() - t0, err: err.message });
-        console.warn('[Pagewalk SW] pre-click captureVisibleTab failed:', err.message);
+        console.warn('[StepSafe SW] pre-click captureVisibleTab failed:', err.message);
       }
     }
 
@@ -764,14 +764,14 @@ async function schedulePostLoadCapture(tabId, stepId) {
         format: 'jpeg', quality: settings.jpegQuality ?? SCREENSHOT_QUALITY,
       });
     } catch (err) {
-      console.warn('[Pagewalk SW] post-load captureVisibleTab failed:', err.message);
+      console.warn('[StepSafe SW] post-load captureVisibleTab failed:', err.message);
     }
     if (shot) {
       await updateStep(stepId, { screenshotPostLoad: shot });
     }
     await showWidgetInTab(tabId, state.stepCount);
   } catch (err) {
-    console.warn('[Pagewalk SW] schedulePostLoadCapture error:', err.message);
+    console.warn('[StepSafe SW] schedulePostLoadCapture error:', err.message);
     try { await showWidgetInTab(tabId, state.stepCount); } catch (_) {}
   }
 }
@@ -809,7 +809,7 @@ async function handleManualCapture(msg, sender) {
         format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
       });
     } catch (err) {
-      console.warn('[Pagewalk SW] captureVisibleTab failed:', err.message);
+      console.warn('[StepSafe SW] captureVisibleTab failed:', err.message);
     }
 
     const step = await createStep(state.guideId, {
@@ -860,7 +860,7 @@ async function handleKeystrokeDetected(msg, sender) {
       broadcastState();
       return { ok: true, merged: true };
     } catch (err) {
-      console.warn('[Pagewalk SW] merge keystroke failed:', err.message);
+      console.warn('[StepSafe SW] merge keystroke failed:', err.message);
       // fall through to new step
     }
   }
@@ -881,7 +881,7 @@ async function handleKeystrokeDetected(msg, sender) {
         format: 'jpeg', quality: settings.jpegQuality || SCREENSHOT_QUALITY,
       });
     } catch (err) {
-      console.warn('[Pagewalk SW] captureVisibleTab failed:', err.message);
+      console.warn('[StepSafe SW] captureVisibleTab failed:', err.message);
     }
 
     const step = await createStep(state.guideId, {
@@ -1140,7 +1140,7 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
     broadcastStepAdded(navStep, state.stepCount - 1);
     broadcastState();
   } catch (err) {
-    console.warn('[Pagewalk SW] nav step failed:', err.message);
+    console.warn('[StepSafe SW] nav step failed:', err.message);
   }
 });
 
@@ -1190,7 +1190,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo) => {
           await showWidgetInTab(tabId, state.stepCount);
         }
       } catch (err) {
-        console.warn('[Pagewalk SW] nav backfill failed:', err.message);
+        console.warn('[StepSafe SW] nav backfill failed:', err.message);
       }
     }
   }
@@ -1250,7 +1250,7 @@ async function injectRecorder(tabId) {
       injectImmediately: true,
     });
   } catch (err) {
-    console.warn('[Pagewalk SW] inject recorder failed:', err.message);
+    console.warn('[StepSafe SW] inject recorder failed:', err.message);
   }
 }
 

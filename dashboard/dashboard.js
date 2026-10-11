@@ -1,5 +1,5 @@
 /**
- * dashboard.js — Guide list for Pagewalk
+ * dashboard.js — Guide list for StepSafe
  */
 import {
   listGuides, getGuide, getStep, updateGuide, deleteGuide, listSteps, getStorageEstimate,
@@ -43,7 +43,6 @@ const spShowWidget      = document.getElementById('sp-show-widget');
 const spAutoRedact      = document.getElementById('sp-auto-redact');
 const spRedactOptions   = document.getElementById('sp-redact-options');
 const spRedactStyle     = document.getElementById('sp-redact-style');
-const spRedactMode      = document.getElementById('sp-redact-mode');
 const spCatEmails       = document.getElementById('sp-cat-emails');
 const spCatPhones       = document.getElementById('sp-cat-phones');
 const spCatCards        = document.getElementById('sp-cat-cards');
@@ -79,8 +78,8 @@ const SETTINGS_KEY = 'pagewalk_settings';
 
 const DEFAULT_BRANDING = {
   brandColor: '#5D2E8C',
-  brandName: 'Pagewalk',
-  logoMark: 'PW',
+  brandName: 'StepSafe',
+  logoMark: 'SS',
   tagline: 'Private guide recorder',
 };
 
@@ -206,7 +205,7 @@ function renderGuides(guides, query = '') {
         <div class="empty-state">
           <div class="empty-icon">📋</div>
           <h2>No guides yet</h2>
-          <p>Open the Pagewalk side panel from your toolbar to start recording a step-by-step guide on any webpage.</p>
+          <p>Open the StepSafe side panel from your toolbar to start recording a step-by-step guide on any webpage.</p>
         </div>`;
     }
     return;
@@ -376,7 +375,7 @@ deleteModal.addEventListener('click', (e) => {
 // ── New recording ─────────────────────────────────────────────────────────────
 
 newGuideBtn.addEventListener('click', () => {
-  showToast('Open the Pagewalk side panel (toolbar icon) to start recording');
+  showToast('Open the StepSafe side panel (toolbar icon) to start recording');
 });
 
 searchInput.addEventListener('input', filterAndRender);
@@ -546,10 +545,9 @@ async function loadSettingsData() {
   spQualityVal.textContent = s.jpegQuality + '%';
   spCaptureOnStart.checked = s.captureOnStart !== false;
   spShowWidget.checked     = !!s.showWidget;
-  spAutoRedact.checked     = !!s.autoRedact;
-  spRedactOptions.style.display = s.autoRedact ? '' : 'none';
-  spRedactStyle.value = s.redactStyle || 'redact';
-  spRedactMode.value  = s.redactMode  || 'capture';
+  spAutoRedact.checked     = s.autoRedact !== false;
+  spRedactOptions.style.display = spAutoRedact.checked ? '' : 'none';
+  spRedactStyle.value = s.redactStyle || 'blur';
 
   const cats = s.redactCategories || {};
   spCatEmails.checked = cats.emails !== false;
@@ -559,6 +557,7 @@ async function loadSettingsData() {
   spCatMoney.checked  = !!cats.money;
   spCatFormFields.checked = !!cats.formFields;
   spCatTableData.checked  = !!cats.tableData;
+  document.querySelectorAll('[data-cat]').forEach(el => { el.checked = cats[el.dataset.cat] !== false; });
   spRenderCustomPatterns(Array.isArray(s.redactCustomPatterns) ? s.redactCustomPatterns : []);
 
   spMaxVersions.value = s.maxVersionsPerGuide ?? DEFAULT_MAX_VERSIONS;
@@ -717,7 +716,6 @@ spSaveBtn.addEventListener('click', async () => {
       showWidget:      spShowWidget.checked,
       autoRedact:      spAutoRedact.checked,
       redactStyle:     spRedactStyle.value,
-      redactMode:      spRedactMode.value,
       redactCategories: {
         emails:      spCatEmails.checked,
         phones:      spCatPhones.checked,
@@ -726,6 +724,7 @@ spSaveBtn.addEventListener('click', async () => {
         money:       spCatMoney.checked,
         formFields:  spCatFormFields.checked,
         tableData:   spCatTableData.checked,
+        ...Object.fromEntries([...document.querySelectorAll('[data-cat]')].map(el => [el.dataset.cat, el.checked])),
       },
       redactCustomPatterns:  spCollectCustomPatterns(),
       maxVersionsPerGuide:   newMax,

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pagewalk — Guides</title>
+  <title>StepSafe — Guides</title>
   <link rel="stylesheet" href="../assets/styles/shared.css">
   <link rel="stylesheet" href="../assets/styles/dashboard.css">
 </head>
@@ -11,8 +11,8 @@
 
   <header class="topbar">
     <a href="#" class="topbar-logo" id="logo-link">
-      <div class="logo-mark">PW</div>
-      <span class="logo-text">Pagewalk</span>
+      <div class="logo-mark">SS</div>
+      <span class="logo-text">StepSafe</span>
     </a>
     <div class="topbar-actions">
       <span class="storage-info" id="storage-info"></span>
@@ -118,14 +118,14 @@
           <div class="sp-row">
             <div class="sp-row-info">
               <span class="sp-row-label">Auto-redact sensitive data</span>
-              <span class="sp-row-desc">Mask emails, phone numbers, credit cards in screenshots</span>
+              <span class="sp-row-desc">Blur emails, phones, cards, Aadhaar, PAN, UPI, IFSC and passwords on the page before every screenshot. Alt+click any element while recording to always blur it.</span>
             </div>
             <label class="sp-toggle">
               <input type="checkbox" id="sp-auto-redact">
               <span class="sp-toggle-track"></span>
             </label>
           </div>
-          <div id="sp-redact-options" style="display:none">
+          <div id="sp-redact-options">
             <div class="sp-redact-sub" style="align-items:flex-start">
               <div class="sp-redact-sub-info">
                 <span class="sp-redact-sub-label">Detect categories</span>
@@ -136,6 +136,10 @@
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-phones"> Phone numbers</label>
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-cards"> Credit cards</label>
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-ssn"> SSNs / IDs</label>
+                <label class="sp-cat-row"><input type="checkbox" data-cat="aadhaar"> Aadhaar</label>
+                <label class="sp-cat-row"><input type="checkbox" data-cat="pan"> PAN</label>
+                <label class="sp-cat-row"><input type="checkbox" data-cat="upi"> UPI IDs</label>
+                <label class="sp-cat-row"><input type="checkbox" data-cat="ifsc"> IFSC codes</label>
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-money"> Money amounts</label>
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-form-fields"> All form fields</label>
                 <label class="sp-cat-row"><input type="checkbox" id="sp-cat-table-data"> Table data</label>
@@ -155,18 +159,8 @@
                 <span class="sp-redact-sub-desc">How sensitive data appears in screenshots</span>
               </div>
               <select id="sp-redact-style" style="font-size:13px;padding:5px 8px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);color:var(--color-text)">
-                <option value="redact">Black blocks (████)</option>
                 <option value="blur">Blur</option>
-              </select>
-            </div>
-            <div class="sp-redact-sub">
-              <div class="sp-redact-sub-info">
-                <span class="sp-redact-sub-label">Redaction timing</span>
-                <span class="sp-redact-sub-desc">When masking is active on the page</span>
-              </div>
-              <select id="sp-redact-mode" style="font-size:13px;padding:5px 8px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);color:var(--color-text)">
-                <option value="capture">On capture only</option>
-                <option value="persistent">Entire recording session</option>
+                <option value="redact">Black blocks (████)</option>
               </select>
             </div>
           </div>
@@ -243,7 +237,7 @@
               <span class="sp-row-label">Brand name</span>
               <span class="sp-row-desc">Shown in export headers and footers</span>
             </div>
-            <input type="text" id="sp-brand-name" class="sp-color-hex" style="width:160px" placeholder="Pagewalk" maxlength="40">
+            <input type="text" id="sp-brand-name" class="sp-color-hex" style="width:160px" placeholder="StepSafe" maxlength="40">
           </div>
           <div class="sp-row">
             <div class="sp-row-info">
