@@ -9,7 +9,7 @@ Private Guide Maker is a Chrome extension (Manifest V3) that turns your clicks i
 - [Automated tests](#automated-tests)
 - [AI step titles on a Mac](#ai-step-titles-on-a-mac)
 - [Permissions](#permissions) · [Privacy](#privacy) · [Known limitations](#known-limitations)
-- [Project structure](#project-structure) · [Build / zip](#build--zip) · [Attribution](#attribution)
+- [Project structure](#project-structure) · [Build / zip](#build--zip) · [SonarCloud setup](#sonarcloud-setup) · [Attribution](#attribution)
 
 ## Features
 - **Recording from the side panel:** Start, Pause/Resume, manual Screenshot, Discard and Complete. Each click, typed field and page navigation becomes a step. Every step gets a screenshot and an automatic title (`Click "Save profile" button`, `Type in "Nickname"`). Typed values never show up in step titles.
@@ -161,6 +161,24 @@ Private Guide Maker/
 npm run build      # → dist/Private Guide Maker.zip
 ```
 This zips the contents of `extension/` plus `LICENSE` and `NOTICE`, with `manifest.json` at the zip root. Tests, e2e, docs and dev files are left out. The build is pure Node and needs no `zip` binary. Unzip the result and use Load unpacked, or upload it to the Chrome Web Store (listing draft: [docs/STORE_LISTING.md](docs/STORE_LISTING.md)). To bump the version, edit `extension/manifest.json`.
+
+## SonarCloud setup
+
+The workflow `.github/workflows/sonarcloud.yml` runs on every push (all branches) and on pull requests (opened, synchronize, reopened). It installs dependencies and runs `npm run test:coverage`, which writes `coverage/lcov.info`. Then it runs the official `SonarSource/sonarqube-scan-action@v8` against SonarCloud. The settings are in `sonar-project.properties`. For a public repository SonarCloud is free.
+
+1. Go to https://sonarcloud.io and click **Log in → With GitHub**. Authorize SonarCloud.
+2. Click **+ → Analyze new project**. If needed, choose **Import an organization from GitHub** and install the SonarCloud GitHub app on your account or org, giving it access to this repository. Then select the repository and click **Set Up**. For the new-code definition, "Previous version" is a good default.
+3. In the project, open **Administration → Analysis Method** and turn **Automatic Analysis off**. The GitHub Actions workflow does the analysis instead. If both are on, the CI scan fails.
+4. Copy your **Organization Key** (shown under *My Organizations*, or in the project's **Information** page) and the **Project Key** into `sonar-project.properties`:
+   ```properties
+   sonar.organization=<your-org-key>
+   sonar.projectKey=<your-project-key>   # usually <org>_<repo>
+   ```
+5. Create a token: **My Account → Security → Generate Tokens**. Give it a name such as `github-actions` and click **Generate**, then copy the value. It is shown only once.
+6. In GitHub open **Settings → Secrets and variables → Actions → New repository secret**. Set the name to `SONAR_TOKEN`, paste the token as the value, and click **Add secret**.
+7. Commit the updated `sonar-project.properties` and push. The **SonarCloud** workflow runs, and the results show up on sonarcloud.io and as a check or comment on pull requests.
+
+Coverage: only Node-testable code (`extension/lib/pii.js`) is measured by `npm run test:coverage`. Browser-only extension files and `e2e/**` are listed in `sonar.coverage.exclusions`, with the reason given in a comment. They are tested end to end by the Playwright suite (`npm run test:e2e`).
 
 ## Attribution
 Private Guide Maker is a fork of **[hamad501/pagewalk](https://github.com/hamad501/pagewalk)** by its contributors, MIT License. The original `LICENSE` is kept unchanged, and attribution is in `NOTICE`. The first commit in this repo is the unmodified upstream import (`git log --reverse`), so `git diff <first-commit> HEAD` shows every Private Guide Maker change. Bundled libraries (idb, Fabric.js, SortableJS) are MIT licensed.

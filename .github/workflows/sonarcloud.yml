@@ -1,0 +1,39 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  sonarcloud:
+    name: Tests, coverage and SonarCloud analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history: SonarCloud needs it for blame / new-code detection
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        env:
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1' # unit tests don't need browsers
+
+      - name: Unit tests with coverage (coverage/lcov.info)
+        run: npm run test:coverage
+
+      - name: SonarCloud scan
+        uses: SonarSource/sonarqube-scan-action@v8
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
