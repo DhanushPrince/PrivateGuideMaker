@@ -513,3 +513,4 @@
 .sp-blur-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); }
 .sp-blur-warn { font-size: 11px; color: #b45309; }
 .sp-blur-warn.hidden { display: none; }
+.sp-blur-hint { font-size: 11px; color: var(--color-text-muted); margin: -6px 0 12px; line-height: 1.4; }

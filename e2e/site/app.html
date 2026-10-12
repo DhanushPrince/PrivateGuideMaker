@@ -1,0 +1,28 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Acme Admin</title>
+<style>body{font:14px sans-serif;margin:16px}td,th{padding:4px 10px;border-bottom:1px solid #ddd}</style></head><body>
+<nav><a href="#" id="nav-users" onclick="go('/users');return false">Users</a> | <a href="#" id="nav-settings" onclick="go('/settings');return false">Settings</a></nav>
+<div id="root"></div>
+<script>
+const views = {
+ '/users': `<h2>Users</h2><table><tr><th>Name</th><th>Email</th><th>Phone</th></tr>
+  <tr><td id="t-name">Priya Sharma</td><td id="t-email">priya.sharma@example.com</td><td id="t-phone">+91 98765 43210</td></tr>
+  <tr><td>Rahul Verma</td><td>rahul@acme.io</td><td>9876543210</td></tr></table>
+  <p>Profile: <input id="i-email" value="owner@acme.io"> <input id="i-name" value="Priya Sharma" autocomplete="off"></p>
+  <div id="ce" contenteditable="true">Notes: call ravi.k@example.org tomorrow</div>
+  <div id="host"></div>
+  <iframe id="fr-same" src="/frame.html" width="320" height="40"></iframe>
+  <iframe id="fr-cross" width="320" height="40"></iframe>
+  <canvas id="cv" width="300" height="30"></canvas>`,
+ '/settings': `<h2>Settings</h2><p id="s-email">Billing contact: finance@acme.io</p><p><input id="s-key" value="sk-live-1234567890abcdef"></p>`,
+};
+function go(p){ history.pushState({},'',p==='/users'?'/app.html':'/app.html?s'); render(p); }
+function render(p){
+ document.getElementById('root').innerHTML = views[p];
+ if (p==='/users'){
+  const h=document.getElementById('host').attachShadow({mode:'open'}); h.innerHTML='<span id="sh-email">shadow.user@example.com</span>';
+  document.getElementById('fr-cross').src = location.protocol+'//127.0.0.1:'+location.port+'/frame.html';
+  const c=document.getElementById('cv').getContext('2d'); c.font='14px sans-serif'; c.fillText('canvas.user@example.com',5,20);
+ }
+}
+setTimeout(()=>render('/users'),200);
+</script></body></html>

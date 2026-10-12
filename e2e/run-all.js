@@ -9,7 +9,7 @@ const { spawnSync } = require('child_process');
 const fs = require('fs'), path = require('path');
 
 const OUT = path.resolve(process.env.E2E_OUT || path.join(__dirname, 'output'));
-const SCRIPTS = ['feat-a-record.js', 'feat-a2-altmark-race.js', 'feat-b-redact.js', 'feat-c-editor.js', 'feat-d-exports.js', 'feat-e-dashboard.js', 'feat-h-blur-toggle.js'];
+const SCRIPTS = ['feat-a-record.js', 'feat-a2-altmark-race.js', 'feat-b-redact.js', 'feat-c-editor.js', 'feat-d-exports.js', 'feat-e-dashboard.js', 'feat-h-blur-toggle.js', 'feat-i-realistic-blur.js'];
 const only = process.argv[2];
 const list = only ? SCRIPTS.filter(s => s.includes(only)) : SCRIPTS;
 

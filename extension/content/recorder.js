@@ -462,6 +462,18 @@
     el.style.setProperty('filter', BLUR, 'important');
   }
 
+  // Document + every open shadow root (web components hide text from
+  // document.querySelectorAll / TreeWalker). Skips our own widget host.
+  function redactRoots() {
+    const roots = [document];
+    for (let i = 0; i < roots.length; i++) {
+      for (const el of roots[i].querySelectorAll('*')) {
+        if (el.shadowRoot && !el.closest('[data-pagewalk]')) roots.push(el.shadowRoot);
+      }
+    }
+    return roots;
+  }
+
   // ponytail: full rescan per mutation batch, O(page text). Scope to
   // mutation records if huge SPAs get janky.
   function redactNow() {
@@ -471,8 +483,10 @@
     const { style, cats, custom } = _redactCfg;
     const hit = (t) => PII.findPII(t, cats, custom).length > 0;
 
+    const roots = redactRoots();
+    const qsa = (sel) => roots.flatMap(r => [...r.querySelectorAll(sel)]);
     // 1. Inputs: always blurred (never rewrite .value — it would be submitted)
-    for (const el of document.querySelectorAll('input, textarea, select')) {
+    for (const el of qsa('input, textarea, select')) {
       if (el.closest('[data-pagewalk]')) continue;
       const type = (el.type || '').toLowerCase();
       if (type === 'hidden') continue;
@@ -483,21 +497,23 @@
     }
 
     // 2. User-marked elements (alt-click while recording) + page opt-in
-    for (const el of document.querySelectorAll('[data-stepsafe-blur]')) blurEl(el);
+    for (const el of qsa('[data-stepsafe-blur]')) blurEl(el);
 
     // 3. Table cells (opt-in)
-    if (cats.tableData) for (const el of document.querySelectorAll('td, th')) blurEl(el);
+    if (cats.tableData) for (const el of qsa('td, th')) blurEl(el);
 
     // 4. Text nodes — hidden ones too, so CSS reveals can't leak
-    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        const p = node.parentElement;
-        if (!p || p.closest('[data-pagewalk], script, style, noscript')) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
     const nodes = [];
-    for (let n; (n = walker.nextNode());) if (hit(n.textContent)) nodes.push(n);
+    for (const root of roots) {
+      const walker = document.createTreeWalker(root === document ? document.body : root, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          const p = node.parentElement;
+          if (!p || p.closest('[data-pagewalk], script, style, noscript')) return NodeFilter.FILTER_REJECT;
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      for (let n; (n = walker.nextNode());) if (hit(n.textContent)) nodes.push(n);
+    }
     for (const node of nodes) {
       if (style === 'blur') { blurEl(node.parentElement); continue; }
       const masked = PII.maskPII(node.textContent, cats, custom, REDACT_CHAR);
@@ -510,7 +526,7 @@
       document.addEventListener('input', redactNow, true);
     }
     _redactObserver.takeRecords();
-    _redactObserver.observe(document.body, { childList: true, subtree: true, characterData: true });
+    for (const root of roots) _redactObserver.observe(root === document ? document.body : root, { childList: true, subtree: true, characterData: true });
   }
 
   function stopRedaction() {

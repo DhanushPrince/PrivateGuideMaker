@@ -213,6 +213,7 @@ async function startRecording(tabId, title) {
   // StepSafe: inject the recorder (which masks the page) BEFORE the first
   // capture. pendingCapture=true keeps clicks from racing it.
   await injectRecorder(tabId);
+  await injectFrameRedactor(tabId);
 
   // Capture the starting page while pendingCapture blocks clicks, so
   // there's no chance of a click arriving mid-capture and reordering the
@@ -942,6 +943,7 @@ async function redactInTab(tabId) {
   try {
     const settings = await getSettings();
     if (settings.autoRedact === false) return;
+    await injectFrameRedactor(tabId);
     // Re-run redaction right before every SW-side capture. It stays applied
     // (and MutationObserver-maintained) until recording stops.
     await chrome.tabs.sendMessage(tabId, {
@@ -1266,6 +1268,19 @@ async function injectRecorder(tabId) {
   } catch (err) {
     console.warn('[StepSafe SW] inject recorder failed:', err.message);
   }
+}
+
+// Blur-only engine for iframes (recorder.js runs in the top frame only).
+// Re-run before every capture so frames added later are covered too;
+// redact-frame.js guards against double injection.
+async function injectFrameRedactor(tabId) {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId, allFrames: true },
+      files: ['lib/pii.js', 'content/redact-frame.js'],
+      injectImmediately: true,
+    });
+  } catch (_) {}
 }
 
 // ─── Utilities ───────────────────────────────────────────────────────────────
