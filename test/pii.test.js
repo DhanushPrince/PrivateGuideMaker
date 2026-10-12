@@ -1,4 +1,4 @@
-// Run: node --test   (no deps)
+// Unit tests for the PII detectors. Run: npm test  (node --test, no deps)
 const test = require('node:test');
 const assert = require('node:assert');
 const { luhn, verhoeff, findPII, maskPII } = require('../extension/lib/pii.js');
