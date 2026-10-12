@@ -1461,6 +1461,10 @@ async function startAnnotation(stepId) {
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="10" r="7"/><path d="M5 10h10M7 6h6M7 14h6"/></svg>
         Blur
       </button>
+      <button class="vw-tool-btn" data-tool="pixelate" title="Pixelate (P)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><rect x="3" y="3" width="6" height="6"/><rect x="11" y="11" width="6" height="6"/><rect x="11" y="3" width="6" height="6" opacity=".45"/><rect x="3" y="11" width="6" height="6" opacity=".45"/></svg>
+        Pixelate
+      </button>
       <button class="vw-tool-btn" data-tool="redact" title="Redact (R)">
         <svg width="14" height="14" viewBox="0 0 20 20" fill="currentColor"><rect x="2" y="6" width="16" height="8" rx="1.5"/></svg>
         Redact
@@ -1470,6 +1474,9 @@ async function startAnnotation(stepId) {
         Text
       </button>
       <div class="vw-tool-sep"></div>
+      <button class="vw-tool-btn" data-action="undo" title="Undo (Ctrl+Z)">
+        <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4L3 8l4 4"/><path d="M3 8h9a5 5 0 0 1 0 10H8"/></svg>
+      </button>
       <button class="vw-tool-btn" data-action="delete" title="Delete selected (Del)">
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3,5 5,5 17,5"/><path d="M16,5l-1,12H5L4,5"/></svg>
       </button>
@@ -1541,6 +1548,7 @@ async function startAnnotation(stepId) {
       clickNum || 1,
     );
   }
+  activeAnnotator.markBaseline();
 
   // Wire toolbar
   const toolBtns = annotatorEl.querySelectorAll('.vw-tool-btn[data-tool]');
@@ -1553,6 +1561,10 @@ async function startAnnotation(stepId) {
   });
   const deleteBtn = annotatorEl.querySelector('.vw-tool-btn[data-action="delete"]');
   deleteBtn.addEventListener('click', () => activeAnnotator.deleteSelected());
+  annotatorEl.querySelector('.vw-tool-btn[data-action="undo"]').addEventListener('click', () => activeAnnotator.undo());
+  annotatorEl.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.target.closest('textarea, input')) { e.preventDefault(); activeAnnotator.undo(); }
+  });
 
   const swatches = annotatorEl.querySelectorAll('.vw-color-swatch');
   const colorPickerInput = annotatorEl.querySelector('.vw-color-picker-input');
