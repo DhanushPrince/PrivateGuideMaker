@@ -37,7 +37,7 @@ for (const s of list) {
 const results = fs.existsSync(RESULTS) ? JSON.parse(fs.readFileSync(RESULTS, 'utf8')) : {};
 const rows = Object.entries(results);
 const bad = rows.filter(([, v]) => v.result === 'FAIL' || v.result === 'PARTIAL');
-const md = ['# StepSafe e2e results', '', `Run: ${new Date().toString()}`, '', '| Result | Check | Evidence | Notes |', '|---|---|---|---|',
+const md = ['# Private Guide Maker e2e results', '', `Run: ${new Date().toString()}`, '', '| Result | Check | Evidence | Notes |', '|---|---|---|---|',
   ...rows.map(([k, v]) => `| ${v.result} | ${k} | ${v.evidence} | ${String(v.notes).replace(/\|/g, '\\|').replace(/\n/g, ' ')} |`)];
 fs.writeFileSync(path.join(OUT, 'SUMMARY.md'), md.join('\n') + '\n');
 

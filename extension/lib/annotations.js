@@ -95,6 +95,10 @@ export class AnnotationCanvas {
 
   _onMouseDown(opt) {
     if (this._tool === 'select') return;
+    // Ignore presses where another element (e.g. the sticky page header)
+    // covers the canvas, so a drag can't start underneath it.
+    const ev = opt.e, hit = ev && 'clientX' in ev ? document.elementFromPoint(ev.clientX, ev.clientY) : null;
+    if (hit && hit !== this._canvas.upperCanvasEl) return;
     if (this._tool === 'text') {
       if (!opt.target) this._addText(this._ptr(opt).x, this._ptr(opt).y);
       return;

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "StepSafe",
+  "name": "Private Guide Maker",
   "version": "1.0.0",
-  "description": "Record clicks into step-by-step guides. Sensitive data is blurred before every screenshot. Local-only, no account.",
+  "description": "Private Guide Maker: record clicks into step-by-step guides. Sensitive data is blurred before every screenshot. Local-only, no account.",
   "permissions": [
     "activeTab",
     "scripting",
@@ -20,18 +20,22 @@
   },
   "action": {
     "default_icon": {
-      "16": "assets/icons/icon16.png",
-      "48": "assets/icons/icon48.png",
-      "128": "assets/icons/icon128.png"
-    }
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "Private Guide Maker"
   },
   "side_panel": {
     "default_path": "sidepanel/sidepanel.html"
   },
   "icons": {
-    "16": "assets/icons/icon16.png",
-    "48": "assets/icons/icon48.png",
-    "128": "assets/icons/icon128.png"
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
   },
-  "minimum_chrome_version": "138"
+  "minimum_chrome_version": "138",
+  "short_name": "Guide Maker"
 }

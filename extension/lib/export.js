@@ -21,8 +21,8 @@ function hexLighten(hex, f) {
 
 const DEFAULT_BRANDING = {
   brandColor: '#5D2E8C',
-  brandName: 'StepSafe',
-  logoMark: 'SS',
+  brandName: 'Private Guide Maker',
+  logoMark: 'PGM',
   tagline: 'Private guide recorder',
 };
 
@@ -668,7 +668,7 @@ async function buildHTML(guide, steps, branding) {
             ? `<img src="${b.logoImage}" style="height:34px;width:auto;max-width:120px;object-fit:contain;display:block" alt="${escapeHtmlAttr(b.brandName)}">`
             : `<div class="footer-logo" style="min-width:34px;padding:0 6px">${escapeHtml(b.logoMark)}</div>`}
           <div>
-            <a class="footer-name" href="https://stepsafe.app" target="_blank" rel="noopener">Made with StepSafe</a>
+            <span class="footer-name">Made with Private Guide Maker</span>
             <div class="footer-tagline">${escapeHtml(b.tagline)}</div>
           </div>
         </div>
@@ -803,7 +803,7 @@ export function exportMarkdown(guide, allSteps) {
     lines.push('---');
     lines.push('');
   }
-  lines.push('<sub>Made with [StepSafe](https://stepsafe.app)</sub>', '');
+  lines.push('<sub>Made with Private Guide Maker</sub>', '');
   downloadText(lines.join('\n'), sanitizeFilename(guide.title) + '.md', 'text/markdown');
 }
 

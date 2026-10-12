@@ -55,7 +55,7 @@ const PROFILE = process.argv[3] || h.PROFILE;
   await dash.goto(L.url('dashboard/dashboard.html')); await h.sleep(800);
   await dash.screenshot({ path: `${h.OUT}/11b-dashboard-after-import.png`, fullPage: true });
   h.record('11. Import (JSON backup restore)', afterG.length === before + payload.guides.length && impSteps > 0 ? 'PASS' : 'FAIL', '11a-import-confirm.png, 11b-dashboard-after-import.png',
-    `Real file input (setInputFiles on hidden #sp-import-input, as a user's file pick) + Import confirm: ${before} → ${afterG.length} guides (+${payload.guides.length}), new IDs assigned, first imported guide has ${impSteps} steps. Only StepSafe/Pagewalk JSON backups are importable.`);
+    `Real file input (setInputFiles on hidden #sp-import-input, as a user's file pick) + Import confirm: ${before} → ${afterG.length} guides (+${payload.guides.length}), new IDs assigned, first imported guide has ${impSteps} steps. Only Private Guide Maker/Pagewalk JSON backups are importable.`);
 
   // Guide Me replay
   const v = await L.ctx.newPage(); h.watchErrors(v, 'viewer', errs);

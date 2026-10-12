@@ -368,7 +368,7 @@ async function doRestoreVersion(versionId) {
     deriveCoverAndActions();
     guideTitleEl.textContent = currentGuide.title;
     heroTitleEl.textContent = currentGuide.title;
-    document.title = `${currentGuide.title} — StepSafe`;
+    document.title = `${currentGuide.title} — Private Guide Maker`;
     renderHero();
     sidebarCount.textContent = actionSteps.length;
     renderSteps();
@@ -466,7 +466,7 @@ async function init() {
   currentSteps = await listSteps(guideId);
   deriveCoverAndActions();
 
-  document.title = `${currentGuide.title} — StepSafe`;
+  document.title = `${currentGuide.title} — Private Guide Maker`;
   guideTitleEl.textContent = currentGuide.title;
   renderHero();
 
@@ -1037,7 +1037,7 @@ async function saveTitle(newTitle) {
   if (!currentGuide || !newTitle || newTitle === currentGuide.title) return;
   await updateGuide(currentGuide.id, { title: newTitle });
   currentGuide.title = newTitle;
-  document.title = `${newTitle} — StepSafe`;
+  document.title = `${newTitle} — Private Guide Maker`;
   showToast('Title updated');
 }
 

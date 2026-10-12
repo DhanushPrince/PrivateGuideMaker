@@ -1,10 +1,10 @@
 #!/usr/bin/env node
-// Zips extension/ (+ LICENSE, NOTICE) into dist/StepSafe.zip with manifest.json at the zip root.
+// Zips extension/ (+ LICENSE, NOTICE) into dist/PrivateGuideMaker.zip with manifest.json at the zip root.
 // Pure Node (no zip binary or npm deps needed). Unzip it and "Load unpacked", or upload it to the Chrome Web Store.
 const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'extension');
-const OUT = path.join(ROOT, 'dist', 'StepSafe.zip');
+const OUT = path.join(ROOT, 'dist', 'PrivateGuideMaker.zip');
 const SKIP = /(^|\/)(\.DS_Store|Thumbs\.db|\..*\.swp|.*~)$|(^|\/)(test|tests|e2e|node_modules)(\/|$)/;
 
 const files = [];
@@ -36,4 +36,4 @@ end.writeUInt32LE(0x06054b50, 0); end.writeUInt16LE(files.length, 8); end.writeU
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, Buffer.concat([...parts, cd, end]));
 const v = JSON.parse(fs.readFileSync(path.join(SRC, 'manifest.json'))).version;
-console.log(`Built ${path.relative(ROOT, OUT)} — StepSafe v${v}, ${files.length} files, ${(fs.statSync(OUT).size / 1024).toFixed(0)} KB`);
+console.log(`Built ${path.relative(ROOT, OUT)} — Private Guide Maker v${v}, ${files.length} files, ${(fs.statSync(OUT).size / 1024).toFixed(0)} KB`);

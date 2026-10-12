@@ -31,8 +31,8 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   // Numbering must match viewer/HTML/PDF: cover unnumbered, action steps 1..N
   const mdNumbering = mdNums.every((n, i) => n === i + 1) && (!steps.some(s => s.isInitialCapture) || /!\[Starting page\]/.test(md));
   // Render the markdown's first images to prove they decode
-  h.record('8a. Export: Markdown', mdImgs === nShots && mdSteps === actionSteps.length && mdNumbering && /Made with \[StepSafe\]/.test(md) && !PII.test(md) ? 'PASS' : 'FAIL', `exports/${d.suggestedFilename()}, 08a-share-menu.png`,
-    `Real Share→Export as Markdown click → download "${d.suggestedFilename()}" (${(md.length / 1024).toFixed(0)} KB): ${mdSteps} "## Step N" sections, ${mdImgs}/${nShots} inline base64 JPEG images, StepSafe badge line present=${/Made with \[StepSafe\]/.test(md)}, raw PII strings=${PII.test(md)}. Numbering ${mdNums.join(',')} for ${actionSteps.length} action steps; starting screenshot is an unnumbered cover like the viewer/HTML/PDF (ok=${mdNumbering}).`);
+  h.record('8a. Export: Markdown', mdImgs === nShots && mdSteps === actionSteps.length && mdNumbering && /Made with Private Guide Maker/.test(md) && !PII.test(md) ? 'PASS' : 'FAIL', `exports/${d.suggestedFilename()}, 08a-share-menu.png`,
+    `Real Share→Export as Markdown click → download "${d.suggestedFilename()}" (${(md.length / 1024).toFixed(0)} KB): ${mdSteps} "## Step N" sections, ${mdImgs}/${nShots} inline base64 JPEG images, Private Guide Maker badge line present=${/Made with Private Guide Maker/.test(md)}, raw PII strings=${PII.test(md)}. Numbering ${mdNums.join(',')} for ${actionSteps.length} action steps; starting screenshot is an unnumbered cover like the viewer/HTML/PDF (ok=${mdNumbering}).`);
 
   // HTML
   dl = v.waitForEvent('download'); await share('html'); d = await dl;
@@ -41,7 +41,7 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   await hp.route('**/*', r => { const u = r.request().url(); if (!u.startsWith('file:') && !u.startsWith('data:')) { ext.push(u); return r.abort(); } r.continue(); });
   hp.on('pageerror', e => errs.push('html-export: ' + e.message));
   await hp.goto('file://' + htmlPath); await h.sleep(1200);
-  const hi = await hp.evaluate(() => ({ nums: document.querySelectorAll('.step-number').length, imgs: [...document.images].filter(i => i.getAttribute('src')).length, ok: [...document.images].filter(i => i.getAttribute('src') && i.complete && i.naturalWidth > 0).length, badge: /StepSafe/.test(document.body.innerText), badgeText: [...document.querySelectorAll('a')].filter(a => /stepsafe/i.test(a.href + a.textContent)).map(a => a.textContent.trim() + ' → ' + a.href).slice(0, 2), title: document.title, text: document.body.innerText }));
+  const hi = await hp.evaluate(() => ({ nums: document.querySelectorAll('.step-number').length, imgs: [...document.images].filter(i => i.getAttribute('src')).length, ok: [...document.images].filter(i => i.getAttribute('src') && i.complete && i.naturalWidth > 0).length, badge: /Private Guide Maker/.test(document.body.innerText), badgeText: [...document.querySelectorAll('.footer-name')].map(a => a.textContent.trim()).slice(0, 2), title: document.title, text: document.body.innerText }));
   await hp.screenshot({ path: `${h.OUT}/08b-html-export-standalone.png` });
   await hp.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await h.sleep(300);
   await hp.screenshot({ path: `${h.OUT}/08b2-html-export-footer-badge.png` });
@@ -73,8 +73,8 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
     ptxt = await pop.evaluate(() => document.body.innerText);
     console.log('poppler-utils not found: PDF checked by object count + print-view text');
   }
-  h.record('8c. Export: PDF via print stylesheet', pages >= 1 && /StepSafe/.test(ptxt) && +pimg >= nShots && !PII.test(ptxt) ? 'PASS' : 'FAIL', `${pdfPath.replace(h.OUT + '/', '')}, 08c-pdf-print-view.png, 08d-pdf-page-1.png`,
-    `Real Share→Export as PDF opens print window (window.print()); PDF generated with page.pdf() of that window (the OS "Save as PDF" dialog itself is NOT TESTABLE HERE): ${pages} A4 pages, ${pimg} embedded images, badge text "StepSafe" in PDF=${/StepSafe/.test(ptxt)}, raw PII=${PII.test(ptxt)}${hasPoppler ? '' : ' (no poppler: text from print view)'}`);
+  h.record('8c. Export: PDF via print stylesheet', pages >= 1 && /Private Guide Maker/.test(ptxt) && +pimg >= nShots && !PII.test(ptxt) ? 'PASS' : 'FAIL', `${pdfPath.replace(h.OUT + '/', '')}, 08c-pdf-print-view.png, 08d-pdf-page-1.png`,
+    `Real Share→Export as PDF opens print window (window.print()); PDF generated with page.pdf() of that window (the OS "Save as PDF" dialog itself is NOT TESTABLE HERE): ${pages} A4 pages, ${pimg} embedded images, badge text "Private Guide Maker" in PDF=${/Private Guide Maker/.test(ptxt)}, raw PII=${PII.test(ptxt)}${hasPoppler ? '' : ' (no poppler: text from print view)'}`);
   await pop.close();
 
   // Copy as text
@@ -92,8 +92,8 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   const j = JSON.parse(fs.readFileSync(jPath, 'utf8'));
   const jRaw = fs.readFileSync(jPath, 'utf8');
   await dash.screenshot({ path: `${h.OUT}/08e-dashboard-backup-section.png`, fullPage: true });
-  h.record('8e. Export: JSON backup (all guides + settings)', j.version === 2 && /^stepsafe-backup-\d{4}-\d\d-\d\d\.json$/.test(d.suggestedFilename()) && j.guides.length >= 1 && j.guides.every(g => Array.isArray(g.steps)) && !PII.test(jRaw) ? 'PASS' : 'FAIL', `exports/${d.suggestedFilename()}, 08e-dashboard-backup-section.png`,
-    `Real click Settings→Export → "${d.suggestedFilename()}": v${j.version}, ${j.guides.length} guides, ${j.guides.reduce((a, g) => a + g.steps.length, 0)} steps, ${j.guides.reduce((a, g) => a + (g.versions || []).length, 0)} versions, settings included; raw PII=${PII.test(jRaw)}. Filename prefix stepsafe-backup=${/^stepsafe-backup-/.test(d.suggestedFilename())}.`);
+  h.record('8e. Export: JSON backup (all guides + settings)', j.version === 2 && /^private-guide-maker-backup-\d{4}-\d\d-\d\d\.json$/.test(d.suggestedFilename()) && j.guides.length >= 1 && j.guides.every(g => Array.isArray(g.steps)) && !PII.test(jRaw) ? 'PASS' : 'FAIL', `exports/${d.suggestedFilename()}, 08e-dashboard-backup-section.png`,
+    `Real click Settings→Export → "${d.suggestedFilename()}": v${j.version}, ${j.guides.length} guides, ${j.guides.reduce((a, g) => a + g.steps.length, 0)} steps, ${j.guides.reduce((a, g) => a + (g.versions || []).length, 0)} versions, settings included; raw PII=${PII.test(jRaw)}. Filename prefix private-guide-maker-backup=${/^private-guide-maker-backup-/.test(d.suggestedFilename())}.`);
   // Branding (same browser session: this Chromium build crashes on any download in a re-opened profile that already has download history)
   // Branding → HTML export
   await dash.goto(url('dashboard/dashboard.html#settings')); await h.sleep(800);
@@ -106,7 +106,7 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   const hpb = await ctx.newPage(); await hpb.goto('file://' + bp); await h.sleep(800);
   await hpb.screenshot({ path: `${h.OUT}/09b-branding-html-export.png` });
   h.record('Branding (name/colour/logo) applied to HTML/PDF export', bh.includes('Acme Support') && /0b7a3e/i.test(bh) ? 'PASS' : 'FAIL', `09b-branding-html-export.png, exports/branded-${d.suggestedFilename()}`,
-    `Settings→Branding brand name + colour saved (${JSON.stringify(br)}); exported HTML contains name=${bh.includes('Acme Support')}, colour=${/0b7a3e/i.test(bh)}; StepSafe badge still present=${/StepSafe/.test(bh)}. Logo upload not exercised.`);
+    `Settings→Branding brand name + colour saved (${JSON.stringify(br)}); exported HTML contains name=${bh.includes('Acme Support')}, colour=${/0b7a3e/i.test(bh)}; Private Guide Maker badge still present=${/Private Guide Maker/.test(bh)}. Logo upload not exercised.`);
 
   h.record('8f. Export: ZIP / share link / cloud', 'NOT PRESENT', '-', 'No zip, share-link, or upload code exists (grep: no JSZip/zip/fetch upload); "Share" menu = PDF, HTML, Markdown, Copy as text only.');
 

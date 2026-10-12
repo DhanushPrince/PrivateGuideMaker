@@ -514,3 +514,7 @@
 .sp-blur-warn { font-size: 11px; color: #b45309; }
 .sp-blur-warn.hidden { display: none; }
 .sp-blur-hint { font-size: 11px; color: var(--color-text-muted); margin: -6px 0 12px; line-height: 1.4; }
+
+/* Product logo image inside the mark */
+.sp-logo-mark.sp-logo-img { background: none; box-shadow: none; padding: 0; overflow: hidden; }
+.sp-logo-mark.sp-logo-img img { display: block; width: 100%; height: 100%; }

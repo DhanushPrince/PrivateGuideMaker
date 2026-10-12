@@ -1,16 +1,16 @@
 # Chrome Web Store listing (draft)
 
-- **Title:** StepSafe — Private Step-by-Step Guide Recorder
+- **Title:** Private Guide Maker — Private Step-by-Step Guide Recorder
 - **Short description (≤132 chars):** Turn clicks into how-to guides with screenshots. Emails, cards, Aadhaar, PAN & passwords are blurred before capture. 100% local.
 - **Category:** Productivity / Workflow & Planning
 - **Single purpose:** Record the user's actions in a tab into a step-by-step guide with redacted screenshots.
-- **Upload:** `dist/StepSafe.zip` from `npm run build` (manifest.json at the zip root).
+- **Upload:** `dist/Private Guide Maker.zip` from `npm run build` (manifest.json at the zip root).
 
 ## Privacy practices tab
 - Data collected: none transmitted. The extension processes website content (page text, screenshots) locally, only on the tab the user chooses to record.
 - Sold to third parties: No. Used for purposes unrelated to the single purpose: No. Used for creditworthiness/lending: No.
 - Remote code: No.
-- Privacy policy URL: https://stepsafe.app/privacy (placeholder — must be a real page before submitting).
+- Privacy policy URL: https://YOUR-DOMAIN/privacy (placeholder — must be a real page before submitting).
 
 ## Permission justifications
 | Permission | Justification |

@@ -1,4 +1,4 @@
-// Shared helpers for the StepSafe feature tests (dev-only).
+// Shared helpers for the Private Guide Maker feature tests (dev-only).
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path'), os = require('os');
 

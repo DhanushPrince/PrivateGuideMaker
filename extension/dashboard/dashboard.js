@@ -78,8 +78,8 @@ const SETTINGS_KEY = 'pagewalk_settings';
 
 const DEFAULT_BRANDING = {
   brandColor: '#5D2E8C',
-  brandName: 'StepSafe',
-  logoMark: 'SS',
+  brandName: 'Private Guide Maker',
+  logoMark: 'PGM',
   tagline: 'Private guide recorder',
 };
 
@@ -205,7 +205,7 @@ function renderGuides(guides, query = '') {
         <div class="empty-state">
           <div class="empty-icon">📋</div>
           <h2>No guides yet</h2>
-          <p>Open the StepSafe side panel from your toolbar to start recording a step-by-step guide on any webpage.</p>
+          <p>Open the Private Guide Maker side panel from your toolbar to start recording a step-by-step guide on any webpage.</p>
         </div>`;
     }
     return;
@@ -375,7 +375,7 @@ deleteModal.addEventListener('click', (e) => {
 // ── New recording ─────────────────────────────────────────────────────────────
 
 newGuideBtn.addEventListener('click', () => {
-  showToast('Open the StepSafe side panel (toolbar icon) to start recording');
+  showToast('Open the Private Guide Maker side panel (toolbar icon) to start recording');
 });
 
 searchInput.addEventListener('input', filterAndRender);
@@ -842,7 +842,7 @@ spExportBtn.addEventListener('click', async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `stepsafe-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `private-guide-maker-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exported ${guides.length} guide${guides.length !== 1 ? 's' : ''}`);

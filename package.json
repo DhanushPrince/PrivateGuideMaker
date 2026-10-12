@@ -1,8 +1,8 @@
 {
-  "name": "stepsafe",
+  "name": "private-guide-maker",
   "version": "1.0.0",
   "private": true,
-  "description": "StepSafe Chrome extension: record clicks into step-by-step guides with PII blurred before every screenshot. The extension itself (extension/) has zero runtime dependencies; this package.json only drives tests and the zip build.",
+  "description": "Private Guide Maker Chrome extension: record clicks into step-by-step guides with PII blurred before every screenshot. The extension itself (extension/) has zero runtime dependencies; this package.json only drives tests and the zip build.",
   "license": "MIT",
   "engines": { "node": ">=20" },
   "scripts": {
