@@ -420,3 +420,24 @@ function formatDate(ts) {
 
 window.addEventListener('beforeunload', stopPolling);
 init();
+
+// ─── Blur on/off toggle ─────────────────────────────────────────────────────
+// Flips pagewalk_settings.autoRedact (same setting as Dashboard > Settings).
+const blurToggle = document.getElementById('blur-toggle');
+const blurLabel  = document.getElementById('blur-label');
+const blurWarn   = document.getElementById('blur-warn');
+function renderBlur(on) {
+  blurToggle.checked = on;
+  blurLabel.textContent = on ? 'Blur: On' : 'Blur: Off';
+  blurWarn.classList.toggle('hidden', on);
+}
+chrome.storage.local.get('pagewalk_settings').then(({ pagewalk_settings: s }) => renderBlur(!s || s.autoRedact !== false));
+blurToggle.addEventListener('change', async () => {
+  const on = blurToggle.checked;
+  renderBlur(on);
+  const { pagewalk_settings: s } = await chrome.storage.local.get('pagewalk_settings');
+  await chrome.storage.local.set({ pagewalk_settings: { ...(s || { redactStyle: 'blur' }), autoRedact: on } });
+});
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area === 'local' && changes.pagewalk_settings) renderBlur(changes.pagewalk_settings.newValue?.autoRedact !== false);
+});

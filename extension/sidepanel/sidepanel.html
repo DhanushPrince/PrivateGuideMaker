@@ -21,6 +21,16 @@
 
   <main class="sp-main">
 
+    <!-- Blur on/off toggle (pagewalk_settings.autoRedact) -->
+    <div class="sp-blur-row" id="blur-row">
+      <label class="sp-blur-switch" title="Turn automatic PII blurring on or off for captures">
+        <input type="checkbox" id="blur-toggle" checked>
+        <span class="sp-blur-track"><span class="sp-blur-knob"></span></span>
+        <span class="sp-blur-label" id="blur-label">Blur: On</span>
+      </label>
+      <span class="sp-blur-warn hidden" id="blur-warn">Screenshots won't be blurred</span>
+    </div>
+
     <!-- IDLE state -->
     <section class="sp-state sp-state-idle" id="state-idle">
       <div class="sp-prompt">

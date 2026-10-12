@@ -545,6 +545,13 @@
     }
     _redactReady = true;
   }).catch(() => {});
+  // Live-apply the Blur on/off toggle while recording.
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local' || !changes.pagewalk_settings || tearingDown) return;
+    const s = changes.pagewalk_settings.newValue || {};
+    if (s.autoRedact === false) { stopRedaction(); _redactCfg = null; }
+    else { setRedactConfig(s.redactStyle, s.redactCategories, s.redactCustomPatterns); redactNow(); }
+  });
 
   // Alt-click toggles "always blur" on any element (not recorded as a step).
   function onMarkClick(event) {

@@ -500,3 +500,16 @@
 .sp-main::-webkit-scrollbar { width: 6px; }
 .sp-main::-webkit-scrollbar-track { background: transparent; }
 .sp-main::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 3px; }
+
+/* Blur on/off toggle */
+.sp-blur-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.sp-blur-switch { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.sp-blur-switch input { position: absolute; opacity: 0; width: 0; height: 0; }
+.sp-blur-track { position: relative; width: 30px; height: 17px; border-radius: 999px; background: var(--color-border, #ccc); transition: background .15s; flex-shrink: 0; }
+.sp-blur-knob { position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: transform .15s; }
+.sp-blur-switch input:checked + .sp-blur-track { background: var(--color-primary); }
+.sp-blur-switch input:checked + .sp-blur-track .sp-blur-knob { transform: translateX(13px); }
+.sp-blur-switch input:focus-visible + .sp-blur-track { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.sp-blur-label { font-size: 12px; font-weight: 600; color: var(--color-text-muted); }
+.sp-blur-warn { font-size: 11px; color: #b45309; }
+.sp-blur-warn.hidden { display: none; }
