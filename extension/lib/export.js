@@ -752,7 +752,11 @@ function getImageNaturalSize(src) {
 
 // ─── Markdown Export ─────────────────────────────────────────────────────────
 
-export function exportMarkdown(guide, steps) {
+export function exportMarkdown(guide, allSteps) {
+  // Same numbering as the viewer / HTML / PDF: the starting screenshot (isInitialCapture) is an
+  // unnumbered cover, and only the remaining steps are numbered.
+  const coverStep = allSteps.find(s => s.isInitialCapture) || null;
+  const steps = allSteps.filter(s => !s.isInitialCapture);
   const lines = [
     `# ${guide.title}`,
     '',
@@ -766,6 +770,12 @@ export function exportMarkdown(guide, steps) {
     '---',
     '',
   );
+  if (coverStep) {
+    lines.push(`**${coverStep.description || 'Starting page'}**`, '');
+    const coverImg = coverStep.screenshotAnnotated || coverStep.screenshotRaw;
+    if (coverImg) lines.push(`![Starting page](${coverImg})`, '');
+    lines.push('---', '');
+  }
   const CALLOUT_MD = { info: 'ℹ️', success: '✅', warning: '⚠️', danger: '🚨', important: '⭐' };
   for (let i = 0; i < steps.length; i++) {
     const step = steps[i];

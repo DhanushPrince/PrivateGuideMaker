@@ -842,7 +842,7 @@ spExportBtn.addEventListener('click', async () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `pagewalk-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = `stepsafe-backup-${new Date().toISOString().slice(0, 10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
     showToast(`Exported ${guides.length} guide${guides.length !== 1 ? 's' : ''}`);
