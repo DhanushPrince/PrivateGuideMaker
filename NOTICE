@@ -6,4 +6,5 @@ Copyright (c) its contributors, licensed under the MIT License. The original
 LICENSE file is retained unchanged in this repository.
 
 Bundled third-party libraries (unchanged from Pagewalk, MIT licensed):
-idb (Jake Archibald), Fabric.js, SortableJS — see lib/vendor/.
+idb (Jake Archibald), Fabric.js, SortableJS — see lib/vendor/
+(extension/lib/vendor/ in the source repository).
