@@ -10,3 +10,8 @@ Thumbs.db
 
 # Claude Code
 .claude/
+
+# Dev / build outputs
+node_modules/
+dist/
+e2e/output/

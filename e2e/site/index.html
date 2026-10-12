@@ -1,0 +1,32 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Acme Bank — Profile</title>
+<style>
+ body{font:18px/1.6 system-ui,sans-serif;margin:24px;color:#222} .row{margin:6px 0} label{display:inline-block;width:160px}
+ input{font-size:18px;padding:4px 8px;width:300px} button{font-size:18px;padding:8px 18px;margin:10px 8px 0 0}
+ #details{margin-top:10px;padding:10px;background:#f3f0fa}
+</style></head>
+<body>
+<h1>Account profile</h1>
+<div class="row">Email: <span>priya.sharma@example.com</span></div>
+<div class="row">Phone: <span>+91 98765 43210</span></div>
+<div class="row">Aadhaar: <span>2341 2341 2346</span></div>
+<div class="row">PAN: <span>ABCPE1234F</span></div>
+<div class="row">Card: <span>4111 1111 1111 1111</span></div>
+<div class="row">UPI: <span>priya@okhdfcbank</span></div>
+<div class="row">IFSC: <span>HDFC0001234</span></div>
+<div class="row" data-stepsafe-blur>Internal note (marked): customer VIP tier 3</div>
+<div class="row"><label for="pw">Password</label><input id="pw" type="password" value="hunter2-secret"></div>
+<div class="row"><label for="em">Login email</label><input id="em" type="email" value="priya.sharma@example.com"></div>
+<div class="row"><label for="nick">Nickname</label><input id="nick" type="text" value="Priya"></div>
+<button id="show">Show linked account</button>
+<button id="save">Save profile</button>
+<div id="details"></div>
+<p><a id="next" href="/page2.html">Go to statements</a></p>
+<script>
+document.getElementById('show').onclick = () => {
+  document.getElementById('details').innerHTML =
+    '<div>Linked UPI: <b>sharma.p@oksbi</b></div><div>Linked card: <b>5555 5555 5555 4444</b></div>';
+};
+document.getElementById('save').onclick = () => { document.title = 'Saved — Acme Bank'; };
+</script>
+</body></html>
