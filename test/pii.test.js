@@ -1,7 +1,7 @@
 // Run: node --test   (no deps)
 const test = require('node:test');
 const assert = require('node:assert');
-const { luhn, verhoeff, findPII, maskPII } = require('../lib/pii.js');
+const { luhn, verhoeff, findPII, maskPII } = require('../extension/lib/pii.js');
 
 const cats = (text) => findPII(text).map(h => h[2]);
 
