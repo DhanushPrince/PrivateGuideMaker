@@ -18,9 +18,18 @@ export async function aiTitles(steps, save) {
     for (const s of todo) {
       // Inputs were PII-masked at record time (recorder.js maskText).
       const ctx = JSON.stringify({ action: s.description, element: s.targetTag, page: s.pageTitle });
-      const out = (await session.prompt(ctx)).trim().split('\n')[0].replace(/^["'*]+|["'*]+$/g, '').slice(0, 120);
+      const out = stripQuotes((await session.prompt(ctx)).trim().split('\n')[0]).slice(0, 120);
       if (out) Object.assign(s, await save(s.id, { description: out, templateDescription: s.description, aiTitle: true }));
     }
   } finally { session.destroy(); }
   return true;
+}
+
+// Strip leading/trailing quote and asterisk characters (linear, no regex backtracking).
+function stripQuotes(str) {
+  const q = new Set(['"', "'", '*']);
+  let a = 0, b = str.length;
+  while (a < b && q.has(str[a])) a++;
+  while (b > a && q.has(str[b - 1])) b--;
+  return str.slice(a, b);
 }

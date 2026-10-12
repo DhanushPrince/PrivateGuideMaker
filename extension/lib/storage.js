@@ -316,6 +316,12 @@ export async function bulkImportGuide(guide, steps, versions = []) {
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
+// Same format as before (base-36 timestamp + 9 base-36 chars) so IDs stay
+// sortable and compatible with existing stored data; randomness now comes from
+// the CSPRNG instead of Math.random().
 export function generateId() {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+  const rnd = crypto.getRandomValues(new Uint8Array(9));
+  let suffix = '';
+  for (const b of rnd) suffix += (b % 36).toString(36);
+  return Date.now().toString(36) + suffix;
 }

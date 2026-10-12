@@ -5,7 +5,12 @@ const fs = require('fs'), path = require('path'), zlib = require('zlib');
 const ROOT = path.resolve(__dirname, '..');
 const SRC = path.join(ROOT, 'extension');
 const OUT = path.join(ROOT, 'dist', 'PrivateGuideMaker.zip');
-const SKIP = /(^|\/)(\.DS_Store|Thumbs\.db|\..*\.swp|.*~)$|(^|\/)(test|tests|e2e|node_modules)(\/|$)/;
+const SKIP_NAMES = new Set(['.DS_Store', 'Thumbs.db']);
+const SKIP_DIRS = new Set(['test', 'tests', 'e2e', 'node_modules']);
+const SKIP = { test: (rel) => {
+  const segs = rel.split('/'), base = segs[segs.length - 1];
+  return SKIP_NAMES.has(base) || (base.length > 4 && base.startsWith('.') && base.endsWith('.swp')) || base.endsWith('~') || segs.some(s => SKIP_DIRS.has(s));
+} };
 
 const files = [];
 (function walk(dir) {

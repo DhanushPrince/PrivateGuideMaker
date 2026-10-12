@@ -47,4 +47,4 @@ const pass = rows.filter(([, v]) => v.result === 'PASS').length;
 console.log(`\n${pass} PASS, ${bad.length} FAIL/PARTIAL, ${rows.length - pass - bad.length} informational; crashed scripts: ${crashed.join(', ') || 'none'}`);
 console.log(`Screenshots, exports and SUMMARY.md: ${OUT}`);
 process.exit(bad.length || crashed.length || !rows.length ? 1 : 0);
-})();
+})().catch(e => { console.error(e); process.exit(1); });

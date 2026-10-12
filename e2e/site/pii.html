@@ -1,5 +1,5 @@
 <!doctype html>
-<html><head><meta charset="utf-8"><title>PII matrix</title>
+<html lang="en"><head><meta charset="utf-8"><title>PII matrix</title>
 <style>body{font:17px/1.5 system-ui,sans-serif;margin:20px;color:#222} .row{margin:4px 0} .k{display:inline-block;width:230px;color:#666} input{font-size:16px;padding:3px 6px;width:260px} button{font-size:16px;padding:6px 14px}</style></head>
 <body>
 <h2>PII category matrix</h2>
@@ -18,8 +18,8 @@
 <div class="row"><span class="k">control (keep)</span><span id="c-ctrl">Order 12345 shipped</span></div>
 <div class="row" id="c-marked" data-stepsafe-blur>data-stepsafe-blur: internal VIP note</div>
 <div class="row"><span class="k">alt-click target</span><span id="c-alt">Nickname: Priya the Great</span></div>
-<div class="row"><span class="k">password</span><input id="c-pw" type="password" value="hunter2-secret"></div>
-<div class="row"><span class="k">plain text input</span><input id="c-text" type="text" value="hello world"></div>
+<div class="row"><span class="k">password</span><input id="c-pw" aria-label="password" type="password" value="hunter2-secret"></div>
+<div class="row"><span class="k">plain text input</span><input id="c-text" aria-label="plain text input" type="text" value="hello world"></div>
 <div class="row"><button id="c-show">Load dynamic</button></div>
 <div id="c-dyn"></div>
 <script>

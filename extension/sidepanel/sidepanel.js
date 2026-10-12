@@ -268,7 +268,7 @@ async function loadRecent() {
     item.addEventListener('click', () => openViewer(guide.id));
     recentList.appendChild(item);
     // Lazy-load thumb
-    loadThumb(guide);
+    loadThumb(guide).catch(e => console.warn('[PGM] loadThumb failed:', e));
   }
 }
 
@@ -419,7 +419,7 @@ function formatDate(ts) {
 }
 
 window.addEventListener('beforeunload', stopPolling);
-init();
+init().catch(e => console.warn('[PGM] sidepanel init failed:', e));
 
 // ─── Blur on/off toggle ─────────────────────────────────────────────────────
 // Flips pagewalk_settings.autoRedact (same setting as Dashboard > Settings).

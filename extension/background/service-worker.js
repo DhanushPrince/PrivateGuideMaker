@@ -117,7 +117,7 @@ let _cachedJpegQuality = SCREENSHOT_QUALITY;
     const s = await getSettings();
     if (typeof s.jpegQuality === 'number') _cachedJpegQuality = s.jpegQuality;
   } catch (_) {}
-})();
+})().catch(e => console.warn('[PGM] cache jpegQuality failed:', e));
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== 'local' || !changes.pagewalk_settings) return;
   const next = changes.pagewalk_settings.newValue;
@@ -452,7 +452,9 @@ async function startGuideMe(guideId, guideTitle, steps) {
     await chrome.scripting.registerContentScripts([{
       id: GUIDE_ME_CONTENT_SCRIPT_ID,
       js: ['content/player.js'],
-      matches: ['http://*/*', 'https://*/*'],
+      // NOSONAR: these are Chrome content-script match patterns, not network requests;
+      // Guide Me playback must also run on plain-http sites the user recorded.
+      matches: ['http://*/*', 'https://*/*'], // NOSONAR
       runAt: 'document_idle',
       allFrames: false,
       persistAcrossSessions: false,
@@ -491,7 +493,7 @@ function waitForTabComplete(tabId, timeoutMs) {
       if (Date.now() - started > timeoutMs) return resolve(null);
       setTimeout(check, 150);
     };
-    check();
+    check().catch(e => console.warn('[PGM] waitForTabComplete failed:', e));
   });
 }
 
@@ -726,7 +728,7 @@ async function handleClickDetected(msg, sender) {
     // Schedule the post-load screenshot asynchronously — does NOT block
     // the next click. Races PAGE_SETTLED (SPA) vs triggerPostLoad('nav')
     // (traditional navigation) vs a 5 s safety timeout.
-    schedulePostLoadCapture(tabId, step.id);
+    schedulePostLoadCapture(tabId, step.id).catch(e => console.warn('[PGM] schedulePostLoadCapture failed:', e));
 
     return { ok: true, stepCount: state.stepCount };
   } finally {
@@ -1311,4 +1313,4 @@ function friendlyUrl(url) {
       await chrome.scripting.unregisterContentScripts({ ids: [GUIDE_ME_CONTENT_SCRIPT_ID] });
     }
   } catch (_) {}
-})();
+})().catch(e => console.warn('[PGM] SW startup restore failed:', e));

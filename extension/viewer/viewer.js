@@ -210,7 +210,7 @@ document.addEventListener('keydown', (e) => {
 
 function openHistoryModal() {
   historyOverlay.hidden = false;
-  renderHistoryList();
+  renderHistoryList().catch(e => console.warn('[PGM] renderHistoryList failed:', e));
 }
 
 function closeHistoryModal() {
@@ -253,7 +253,7 @@ async function renderHistoryList() {
 
     item.querySelector('.vw-history-restore').addEventListener('click', (e) => {
       e.stopPropagation();
-      doRestoreVersion(v.id);
+      doRestoreVersion(v.id).catch(e => console.warn('[PGM] doRestoreVersion failed:', e));
     });
 
     item.querySelector('.vw-history-del').addEventListener('click', async (e) => {
@@ -616,7 +616,7 @@ function buildStepCard(step, i) {
   card.dataset.idx = i;
   card.dataset.stepId = step.id;
 
-  const type = step.type || (step.clickX > 0 || step.clickY > 0 ? 'click' : 'click');
+  const type = step.type || 'click';
   card.classList.add(`type-${type}`);
   if (type === 'navigate') card.classList.add('nav-step');
 
@@ -768,7 +768,7 @@ function buildStepCard(step, i) {
     `;
     annotateBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      startAnnotation(step.id);
+      startAnnotation(step.id).catch(e => console.warn('[PGM] startAnnotation failed:', e));
     });
     imgWrap.appendChild(annotateBtn);
 
@@ -806,7 +806,7 @@ function buildStepCard(step, i) {
     imgWrap.addEventListener('click', (e) => {
       if (e.target.closest('.vw-annotate-btn')) return;
       if (editMode) {
-        startAnnotation(step.id);
+        startAnnotation(step.id).catch(e => console.warn('[PGM] startAnnotation failed:', e));
       } else {
         openLightbox(step);
       }
@@ -872,15 +872,15 @@ function buildStepCard(step, i) {
   const delBtn = head.querySelector('.vw-step-action-btn.del');
   delBtn.addEventListener('click', (e) => {
     e.stopPropagation();
-    promptDeleteStep(step.id);
+    promptDeleteStep(step.id).catch(e => console.warn('[PGM] promptDeleteStep failed:', e));
   });
 
   const upBtn = head.querySelector('.vw-step-mv-up');
   const dnBtn = head.querySelector('.vw-step-mv-dn');
   upBtn.disabled = i === 0;
   dnBtn.disabled = i === actionSteps.length - 1;
-  upBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStep(step.id, -1); });
-  dnBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStep(step.id, +1); });
+  upBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStep(step.id, -1).catch(e => console.warn('[PGM] moveStep failed:', e)); });
+  dnBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStep(step.id, +1).catch(e => console.warn('[PGM] moveStep failed:', e)); });
 
   return card;
 }
@@ -1378,7 +1378,7 @@ function waitForTabComplete(tabId, timeoutMs) {
       if (Date.now() - started > timeoutMs) return resolve(null);
       setTimeout(check, 200);
     };
-    check();
+    check().catch(e => console.warn('[PGM] waitForTabComplete failed:', e));
   });
 }
 
@@ -1546,7 +1546,7 @@ async function startAnnotation(stepId) {
       step.clickX * dpr * (canvasW / naturalW),
       step.clickY * dpr * (canvasH / naturalH),
       clickNum || 1,
-    );
+    ).catch(e => console.warn('[PGM] addClickPin failed:', e));
   }
   activeAnnotator.markBaseline();
 
@@ -1796,4 +1796,4 @@ function formatDate(ts) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-init();
+init().catch(e => console.warn('[PGM] viewer init failed:', e));

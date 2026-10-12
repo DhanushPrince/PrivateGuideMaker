@@ -22,7 +22,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 function serve(port = PORT) {
   return new Promise((res, rej) => {
     const srv = http.createServer((q, r) => {
-      let p = decodeURIComponent(new URL(q.url, 'http://x').pathname);
+      let p = decodeURIComponent(q.url.split(/[?#]/)[0]);
       if (p === '/') p = '/index.html';
       const f = path.join(SITE, path.normalize(p));
       if (!f.startsWith(SITE) || !fs.existsSync(f)) { r.statusCode = 404; return r.end('nf'); }

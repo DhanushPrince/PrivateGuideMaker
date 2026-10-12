@@ -31,8 +31,8 @@
           <span class="guide-count" id="guide-count"></span>
         </h1>
         <div class="search-controls">
-          <input type="search" id="search-input" class="search-input" placeholder="Search guides…" autocomplete="off">
-          <select id="sort-select" class="sort-select" title="Sort order">
+          <input type="search" id="search-input" aria-label="Search guides" class="search-input" placeholder="Search guides…" autocomplete="off">
+          <select id="sort-select" aria-label="Sort order" class="sort-select" title="Sort order">
             <option value="newest">Newest first</option>
             <option value="oldest">Oldest first</option>
             <option value="az">A → Z</option>
@@ -81,7 +81,7 @@
               <span class="sp-row-desc">Wait after a click before capturing (ms)</span>
             </div>
             <div class="sp-row-ctrl">
-              <input type="range" id="sp-delay" min="0" max="2000" step="50">
+              <input type="range" id="sp-delay" aria-label="Screenshot delay" min="0" max="2000" step="50">
               <span class="sp-value" id="sp-delay-val">300ms</span>
             </div>
           </div>
@@ -91,7 +91,7 @@
               <span class="sp-row-desc">Higher = sharper screenshots, larger storage</span>
             </div>
             <div class="sp-row-ctrl">
-              <input type="range" id="sp-quality" min="20" max="100" step="5">
+              <input type="range" id="sp-quality" aria-label="JPEG quality" min="20" max="100" step="5">
               <span class="sp-value" id="sp-quality-val">85%</span>
             </div>
           </div>
@@ -100,8 +100,8 @@
               <span class="sp-row-label">Capture on start</span>
               <span class="sp-row-desc">Take a screenshot of the current page the moment recording begins</span>
             </div>
-            <label class="sp-toggle">
-              <input type="checkbox" id="sp-capture-on-start">
+            <label class="sp-toggle" for="sp-capture-on-start" aria-label="Capture on start">
+              <input type="checkbox" id="sp-capture-on-start" aria-label="Capture on start">
               <span class="sp-toggle-track"></span>
             </label>
           </div>
@@ -110,8 +110,8 @@
               <span class="sp-row-label">Show recording widget</span>
               <span class="sp-row-desc">Display the floating control widget on the page while recording</span>
             </div>
-            <label class="sp-toggle">
-              <input type="checkbox" id="sp-show-widget">
+            <label class="sp-toggle" for="sp-show-widget" aria-label="Show recording widget">
+              <input type="checkbox" id="sp-show-widget" aria-label="Show recording widget">
               <span class="sp-toggle-track"></span>
             </label>
           </div>
@@ -120,8 +120,8 @@
               <span class="sp-row-label">Auto-redact sensitive data</span>
               <span class="sp-row-desc">Blur emails, phones, cards, Aadhaar, PAN, UPI, IFSC and passwords on the page before every screenshot. Alt+click any element while recording to always blur it.</span>
             </div>
-            <label class="sp-toggle">
-              <input type="checkbox" id="sp-auto-redact">
+            <label class="sp-toggle" for="sp-auto-redact" aria-label="Auto-redact sensitive data">
+              <input type="checkbox" id="sp-auto-redact" aria-label="Auto-redact sensitive data">
               <span class="sp-toggle-track"></span>
             </label>
           </div>
@@ -158,7 +158,7 @@
                 <span class="sp-redact-sub-label">Redaction style</span>
                 <span class="sp-redact-sub-desc">How sensitive data appears in screenshots</span>
               </div>
-              <select id="sp-redact-style" style="font-size:13px;padding:5px 8px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);color:var(--color-text)">
+              <select id="sp-redact-style" aria-label="Redaction style" style="font-size:13px;padding:5px 8px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);color:var(--color-text)">
                 <option value="blur">Blur</option>
                 <option value="redact">Black blocks (████)</option>
               </select>
@@ -169,7 +169,7 @@
               <span class="sp-row-label">Default guide title</span>
               <span class="sp-row-desc">Template for new recordings. Tokens: <code>{host}</code> <code>{title}</code> <code>{date}</code> <code>{time}</code></span>
             </div>
-            <input type="text" id="sp-title-template" class="sp-color-hex" style="width:220px"
+            <input type="text" id="sp-title-template" aria-label="Default guide title" class="sp-color-hex" style="width:220px"
                    placeholder="Guide — {host}" maxlength="120" spellcheck="false">
           </div>
           <div class="sp-row">
@@ -178,7 +178,7 @@
               <span class="sp-row-desc">Max history snapshots kept per guide (1 – 50)</span>
             </div>
             <div class="sp-row-ctrl">
-              <input type="number" id="sp-max-versions" min="1" max="50" value="5"
+              <input type="number" id="sp-max-versions" aria-label="Versions per guide" min="1" max="50" value="5"
                      style="width:64px;font-size:13px;padding:5px 8px;border:1px solid var(--color-border);border-radius:6px;background:var(--color-bg);color:var(--color-text);text-align:center">
             </div>
           </div>
@@ -210,7 +210,7 @@
               <span class="sp-row-desc">Add guides from a backup file — existing guides are kept</span>
             </div>
             <button class="btn-ghost" id="sp-import-btn" style="font-size:12px;white-space:nowrap;flex-shrink:0">Import</button>
-            <input type="file" id="sp-import-input" accept=".json,application/json" style="display:none">
+            <input type="file" id="sp-import-input" aria-label="Import backup file" accept=".json,application/json" style="display:none">
           </div>
         </div>
 
@@ -227,9 +227,9 @@
             <div class="sp-row-ctrl">
               <div class="sp-color-wrap">
                 <button class="sp-color-swatch" id="sp-color-swatch"></button>
-                <input type="color" id="sp-color-picker" value="#5D2E8C">
+                <input type="color" id="sp-color-picker" aria-label="Primary color picker" value="#5D2E8C">
               </div>
-              <input type="text" id="sp-color-hex" class="sp-color-hex" value="#5D2E8C" maxlength="7" spellcheck="false">
+              <input type="text" id="sp-color-hex" aria-label="Primary color hex value" class="sp-color-hex" value="#5D2E8C" maxlength="7" spellcheck="false">
             </div>
           </div>
           <div class="sp-row">
@@ -237,14 +237,14 @@
               <span class="sp-row-label">Brand name</span>
               <span class="sp-row-desc">Shown in export headers and footers</span>
             </div>
-            <input type="text" id="sp-brand-name" class="sp-color-hex" style="width:160px" placeholder="Private Guide Maker" maxlength="40">
+            <input type="text" id="sp-brand-name" aria-label="Brand name" class="sp-color-hex" style="width:160px" placeholder="Private Guide Maker" maxlength="40">
           </div>
           <div class="sp-row">
             <div class="sp-row-info">
               <span class="sp-row-label">Logo mark</span>
               <span class="sp-row-desc">Text badge fallback when no image is set</span>
             </div>
-            <input type="text" id="sp-logo-mark" class="sp-color-hex" style="width:64px;text-transform:uppercase" placeholder="PW" maxlength="4">
+            <input type="text" id="sp-logo-mark" aria-label="Logo mark" class="sp-color-hex" style="width:64px;text-transform:uppercase" placeholder="PW" maxlength="4">
           </div>
           <div class="sp-row">
             <div class="sp-row-info">
@@ -257,7 +257,7 @@
                 <button class="btn-ghost" id="sp-logo-upload-btn" style="font-size:11px;padding:4px 8px">Upload</button>
                 <button class="btn-ghost" id="sp-logo-remove-btn" style="font-size:11px;padding:4px 8px;color:var(--color-danger);display:none">Remove</button>
               </div>
-              <input type="file" id="sp-logo-file-input" accept="image/*" style="display:none">
+              <input type="file" id="sp-logo-file-input" aria-label="Logo image file" accept="image/*" style="display:none">
             </div>
           </div>
           <div class="sp-row">
@@ -265,7 +265,7 @@
               <span class="sp-row-label">Tagline</span>
               <span class="sp-row-desc">Short line shown below your brand name in exports</span>
             </div>
-            <input type="text" id="sp-tagline" class="sp-color-hex" style="width:200px" placeholder="Private guide recorder" maxlength="60">
+            <input type="text" id="sp-tagline" aria-label="Tagline" class="sp-color-hex" style="width:200px" placeholder="Private guide recorder" maxlength="60">
           </div>
           <div class="sp-save-row">
             <button class="btn-primary" id="sp-save-branding-btn" style="font-size:13px">Save Branding</button>

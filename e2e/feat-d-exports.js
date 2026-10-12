@@ -38,7 +38,7 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   dl = v.waitForEvent('download'); await share('html'); d = await dl;
   const htmlPath = `${h.EXPORTS}/${d.suggestedFilename()}`; await d.saveAs(htmlPath);
   const hp = await ctx.newPage(); const ext = [];
-  await hp.route('**/*', r => { const u = r.request().url(); if (!u.startsWith('file:') && !u.startsWith('data:')) { ext.push(u); return r.abort(); } r.continue(); });
+  await hp.route('**/*', r => { const u = r.request().url(); if (!u.startsWith('file:') && !u.startsWith('data:')) { ext.push(u); return r.abort(); } return r.continue(); });
   hp.on('pageerror', e => errs.push('html-export: ' + e.message));
   await hp.goto('file://' + htmlPath); await h.sleep(1200);
   const hi = await hp.evaluate(() => ({ nums: document.querySelectorAll('.step-number').length, imgs: [...document.images].filter(i => i.getAttribute('src')).length, ok: [...document.images].filter(i => i.getAttribute('src') && i.complete && i.naturalWidth > 0).length, badge: /Private Guide Maker/.test(document.body.innerText), badgeText: [...document.querySelectorAll('.footer-name')].map(a => a.textContent.trim()).slice(0, 2), title: document.title, text: document.body.innerText }));
@@ -57,15 +57,17 @@ const PII = /priya\.sharma@example\.com|9876543210|98765 43210|4111 1111 1111 11
   await pop.pdf({ path: pdfPath, format: 'A4', printBackground: true });
   // Inspect the PDF with poppler-utils when installed (Linux: apt install poppler-utils, Mac: brew install poppler);
   // otherwise fall back to counting PDF objects + reading the print view's text (same content that went into the PDF).
-  let hasPoppler = false;
-  try { execSync('command -v pdfinfo', { stdio: 'ignore' }); hasPoppler = !process.env.NO_POPPLER; } catch { }
+  // Look poppler up in fixed system dirs and call it by absolute path (no PATH lookup).
+  const POPPLER_DIR = ['/usr/bin', '/usr/local/bin', '/opt/homebrew/bin'].find(d => fs.existsSync(`${d}/pdfinfo`));
+  const bin = (name) => `${POPPLER_DIR}/${name}`;
+  const hasPoppler = !!POPPLER_DIR && !process.env.NO_POPPLER;
   let pages, ptxt, pimg;
   if (hasPoppler) {
-    const info = execSync(`pdfinfo "${pdfPath}"`).toString();
+    const info = execSync(`"${bin('pdfinfo')}" "${pdfPath}"`).toString();
     pages = +(/Pages:\s+(\d+)/.exec(info) || [])[1];
-    ptxt = execSync(`pdftotext "${pdfPath}" -`).toString();
-    pimg = execSync(`pdfimages -list "${pdfPath}" | tail -n +3 | wc -l`).toString().trim();
-    execSync(`pdftoppm -png -r 50 -f 1 -l 2 "${pdfPath}" "${h.OUT}/08d-pdf-page"`);
+    ptxt = execSync(`"${bin('pdftotext')}" "${pdfPath}" -`).toString();
+    pimg = String(Math.max(0, execSync(`"${bin('pdfimages')}" -list "${pdfPath}"`).toString().trim().split('\n').length - 2));
+    execSync(`"${bin('pdftoppm')}" -png -r 50 -f 1 -l 2 "${pdfPath}" "${h.OUT}/08d-pdf-page"`);
   } else {
     const raw = fs.readFileSync(pdfPath).toString('latin1');
     pages = (raw.match(/\/Type\s*\/Page\b/g) || []).length;

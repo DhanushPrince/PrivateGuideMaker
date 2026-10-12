@@ -104,7 +104,7 @@ function showView(view, pushHistory = true) {
     }
   }
 
-  if (isSettings) loadSettingsData();
+  if (isSettings) loadSettingsData().catch(e => console.warn('[PGM] loadSettingsData failed:', e));
 }
 
 window.addEventListener('popstate', () => {
@@ -219,7 +219,7 @@ function renderGuides(guides, query = '') {
   }
 
   for (const guide of guides) {
-    loadThumbnail(guide.id);
+    loadThumbnail(guide.id).catch(e => console.warn('[PGM] loadThumbnail failed:', e));
   }
 }
 
@@ -265,10 +265,10 @@ function createGuideCard(guide) {
   card.querySelector('.guide-thumbnail').addEventListener('click', () => playGuide(guide.id));
   card.querySelector('.open-btn').addEventListener('click', (e) => { e.stopPropagation(); playGuide(guide.id); });
   card.querySelector('.edit-btn').addEventListener('click', (e) => { e.stopPropagation(); openEditor(guide.id); });
-  card.querySelector('.duplicate-btn').addEventListener('click', (e) => { e.stopPropagation(); duplicateGuide(guide.id, guide.title); });
+  card.querySelector('.duplicate-btn').addEventListener('click', (e) => { e.stopPropagation(); duplicateGuide(guide.id, guide.title).catch(e => console.warn('[PGM] duplicateGuide failed:', e)); });
   card.querySelector('.delete-btn').addEventListener('click', (e) => { e.stopPropagation(); promptDelete(guide.id, guide.title); });
   card.querySelector('.rename-btn').addEventListener('click', (e) => { e.stopPropagation(); startRename(guide.id); });
-  card.querySelector('.pin-btn').addEventListener('click', (e) => { e.stopPropagation(); togglePin(guide.id); });
+  card.querySelector('.pin-btn').addEventListener('click', (e) => { e.stopPropagation(); togglePin(guide.id).catch(e => console.warn('[PGM] togglePin failed:', e)); });
 
   return card;
 }
@@ -466,7 +466,7 @@ function renderGuideTags(guideId, tags) {
     chip.addEventListener('click', (e) => {
       if (e.target.closest('.tag-remove')) {
         e.stopPropagation();
-        removeTag(guideId, tag);
+        removeTag(guideId, tag).catch(e => console.warn('[PGM] removeTag failed:', e));
       } else {
         e.stopPropagation();
         activeTagFilter = activeTagFilter === tag ? null : tag;
@@ -669,7 +669,7 @@ spSaveBtn.addEventListener('click', async () => {
   const r = await chrome.storage.local.get(SETTINGS_KEY);
   const existing = r[SETTINGS_KEY] || {};
 
-  const newMax = Math.min(50, Math.max(1, parseInt(spMaxVersions.value, 10) || DEFAULT_MAX_VERSIONS));
+  const newMax = Math.min(50, Math.max(1, Number.parseInt(spMaxVersions.value, 10) || DEFAULT_MAX_VERSIONS));
   spMaxVersions.value = newMax; // normalise display
   const oldMax = existing.maxVersionsPerGuide ?? DEFAULT_MAX_VERSIONS;
 
@@ -710,8 +710,8 @@ spSaveBtn.addEventListener('click', async () => {
   await chrome.storage.local.set({
     [SETTINGS_KEY]: {
       ...existing,
-      screenshotDelay: parseInt(spDelay.value, 10),
-      jpegQuality:     parseInt(spQuality.value, 10),
+      screenshotDelay: Number.parseInt(spDelay.value, 10),
+      jpegQuality:     Number.parseInt(spQuality.value, 10),
       captureOnStart:  spCaptureOnStart.checked,
       showWidget:      spShowWidget.checked,
       autoRedact:      spAutoRedact.checked,
@@ -945,7 +945,7 @@ spImportInput.addEventListener('change', async () => {
 
     await loadGuides();
     // Refresh settings UI if currently visible
-    if (settingsView.style.display !== 'none') loadSettingsData();
+    if (settingsView.style.display !== 'none') loadSettingsData().catch(e => console.warn('[PGM] loadSettingsData failed:', e));
 
     const msg = failed > 0
       ? `Imported ${imported} guide${imported !== 1 ? 's' : ''} (${failed} failed)`
@@ -995,4 +995,4 @@ function escapeAttr(str) {
   return String(str).replace(/[^a-zA-Z0-9_-]/g, '_');
 }
 
-init();
+init().catch(e => console.warn('[PGM] dashboard init failed:', e));
